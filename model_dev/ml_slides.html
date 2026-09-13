@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สไลด์นำเสนอระบบ Machine Learning 4 ขั้นตอน — Egg Yolk Color Grading</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #F59E0B;
+      --primary-dark: #D97706;
+      --primary-light: #FEF3C7;
+      --primary-subtle: #FFFBEB;
+      --secondary: #3B82F6;
+      --secondary-dark: #1D4ED8;
+      --secondary-light: #EFF6FF;
+      --accent: #8B5CF6;
+      --accent-light: #F5F3FF;
+      --success: #10B981;
+      --success-light: #ECFDF5;
+      --danger: #EF4444;
+      --dark: #0F172A;
+      --dark-card: #1E293B;
+      --card-bg: #FFFFFF;
+      --bg: #0B0F19;
+      --slide-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #1E293B;
+      --text-muted: #64748B;
+      --code-bg: #0F172A;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* Top Floating Navigation Bar */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1.5rem;
+      z-index: 1000;
+      color: white;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: #F8FAFC;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #F59E0B, #EA580C);
+      color: white;
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #F1F5F9;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Kanit', sans-serif;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn-icon.active {
+      background: var(--primary);
+      color: #0F172A;
+      font-weight: 600;
+      border-color: var(--primary);
+    }
+
+    /* Presentation Deck Container */
+    .deck-container {
+      position: absolute;
+      top: 56px;
+      bottom: 60px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.25rem;
+      perspective: 1200px;
+    }
+
+    /* Slide Card */
+    .slide {
+      position: absolute;
+      width: 94%;
+      max-width: 1280px;
+      height: 94%;
+      max-height: 780px;
+      background: var(--slide-bg);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 2.25rem 2.75rem;
+      opacity: 0;
+      transform: translateY(20px) scale(0.98);
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      z-index: 10;
+    }
+
+    /* Slide Header */
+    .slide-header {
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid #F1F5F9;
+      padding-bottom: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-shrink: 0;
+    }
+
+    .slide-category {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .slide-title {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--dark);
+      line-height: 1.25;
+    }
+
+    .slide-number-pill {
+      background: #F1F5F9;
+      color: #64748B;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    /* Slide Content Body */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      color: #334155;
+      font-size: 0.98rem;
+      line-height: 1.65;
+    }
+
+    /* Bottom Control Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1.5rem;
+      z-index: 1000;
+      color: white;
+    }
+
+    .progress-container {
+      flex: 1;
+      max-width: 500px;
+      margin: 0 1.5rem;
+      background: rgba(255, 255, 255, 0.15);
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #F59E0B, #EA580C);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .nav-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-nav {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.45rem 1rem;
+      border-radius: 8px;
+      font-family: 'Kanit', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+      background: var(--primary);
+      color: #0F172A;
+      border-color: var(--primary);
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .slide-counter {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #94A3B8;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    /* Grids & Cards Layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.85rem;
+    }
+
+    .card {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.15rem 1.35rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .card-accent-amber {
+      background: #FFFBEB;
+      border-color: #FDE68A;
+    }
+
+    .card-accent-blue {
+      background: #EFF6FF;
+      border-color: #BFDBFE;
+    }
+
+    .card-accent-green {
+      background: #ECFDF5;
+      border-color: #A7F3D0;
+    }
+
+    .card-accent-purple {
+      background: #F5F3FF;
+      border-color: #DDD6FE;
+    }
+
+    /* Typography & Badges */
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #1E293B;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    p, li {
+      font-size: 0.94rem;
+      line-height: 1.6;
+      color: #475569;
+    }
+
+    ul, ol {
+      margin-left: 1.25rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .badge-amber { background: #FEF3C7; color: #B45309; }
+    .badge-blue { background: #DBEAFE; color: #1E40AF; }
+    .badge-green { background: #DCFCE7; color: #166534; }
+    .badge-purple { background: #F3E8FF; color: #6B21A8; }
+    .badge-win { background: #DCFCE7; color: #15803D; font-weight: 700; }
+
+    /* Code Blocks */
+    .code-wrapper {
+      background: var(--code-bg);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .code-wrapper pre {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.84rem;
+      line-height: 1.6;
+      color: #F8FAFC;
+    }
+
+    .kw { color: #F472B6; font-weight: 500; }
+    .fn { color: #60A5FA; }
+    .str { color: #34D399; }
+    .num { color: #FBBF24; }
+    .cm { color: #64748B; font-style: italic; }
+
+    /* Math Box */
+    .math-box {
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      border-radius: 12px;
+      padding: 0.9rem 1.25rem;
+      text-align: center;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.05rem;
+      color: #0F172A;
+      font-weight: 600;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin: 0.5rem 0;
+    }
+
+    th {
+      background: #F8FAFC;
+      color: #475569;
+      font-weight: 600;
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    td {
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      color: #334155;
+    }
+
+    tr.highlight {
+      background: #FEFCE8;
+      font-weight: 600;
+    }
+
+    /* Callout */
+    .callout {
+      border-radius: 12px;
+      padding: 0.9rem 1.15rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      font-size: 0.92rem;
+    }
+
+    .callout-success {
+      background: #ECFDF5;
+      border-left: 4px solid #10B981;
+      color: #065F46;
+    }
+
+    .callout-info {
+      background: #EFF6FF;
+      border-left: 4px solid #3B82F6;
+      color: #1E40AF;
+    }
+
+    .callout-warning {
+      background: #FFFBEB;
+      border-left: 4px solid #F59E0B;
+      color: #92400E;
+    }
+
+    /* Overview Modal */
+    .overview-modal {
+      position: fixed;
+      top: 56px;
+      bottom: 60px;
+      left: 0;
+      right: 0;
+      background: rgba(11, 15, 25, 0.95);
+      backdrop-filter: blur(16px);
+      z-index: 2000;
+      display: none;
+      padding: 2.5rem;
+      overflow-y: auto;
+    }
+
+    .overview-modal.active {
+      display: block;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.25rem;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    .overview-card {
+      background: #1E293B;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.15rem;
+      cursor: pointer;
+      color: white;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 140px;
+    }
+
+    .overview-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+    }
+
+    .overview-card.current {
+      border: 2px solid var(--primary);
+      background: rgba(245, 158, 11, 0.15);
+    }
+
+    .overview-card .card-num {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .overview-card .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-top: 0.35rem;
+    }
+
+    /* Scroll Mode */
+    body.scroll-mode {
+      overflow-y: auto;
+      height: auto;
+    }
+
+    body.scroll-mode .deck-container {
+      position: static;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      padding: 5rem 1.5rem;
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+
+    body.scroll-mode .slide {
+      position: static;
+      display: flex;
+      width: 100%;
+      height: auto;
+      max-height: none;
+      opacity: 1;
+      transform: none;
+      margin-bottom: 2rem;
+    }
+
+    body.scroll-mode .bottom-bar {
+      display: none;
+    }
+
+    /* Accordion for Q&A */
+    .qa-box {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+      background: white;
+    }
+
+    .qa-title {
+      padding: 0.85rem 1.15rem;
+      background: #F8FAFC;
+      font-weight: 600;
+      color: var(--dark);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    .qa-title::after {
+      content: '+';
+      color: var(--primary-dark);
+      font-size: 1.25rem;
+    }
+
+    .qa-box.open .qa-title::after {
+      content: '−';
+    }
+
+    .qa-content {
+      display: none;
+      padding: 1rem 1.25rem;
+      background: white;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+      line-height: 1.65;
+      color: #475569;
+    }
+
+    .qa-box.open .qa-content {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <span style="font-size: 1.4rem;">🍳</span>
+      <span>ระบบประเมินสีไข่แดง DSM Fan</span>
+      <span class="brand-badge">ML PIPELINE DECK</span>
+    </div>
+
+    <div class="top-controls">
+      <button class="btn-icon" id="btnMode" title="สลับโหมดนำเสนอ / โหมดเอกสาร (M)">
+        <span>📑</span> โหมดเอกสาร
+      </button>
+      <button class="btn-icon" id="btnOverview" title="ดูภาพรวมสไลด์ทั้งหมด (O)">
+        <span>🗂️</span> สไลด์ทั้งหมด
+      </button>
+      <button class="btn-icon" id="btnFullscreen" title="แสดงเต็มจอ (F)">
+        <span>⛶</span> เต็มจอ
+      </button>
+      <button class="btn-icon" id="btnHelp" title="คีย์ลัดช่วยเหลือ (?)">
+        <span>⌨️</span> คีย์ลัด
+      </button>
+    </div>
+  </header>
+
+  <!-- Presentation Deck Container -->
+  <main class="deck-container">
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 01: TITLE -->
+    <!-- ================================================================= -->
+    <article class="slide active" data-slide="1">
+      <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 1rem 0;">
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #FFFBEB; border: 1px solid #FDE68A; color: #B45309; padding: 0.4rem 1.1rem; border-radius: 9999px; font-size: 0.88rem; font-weight: 600; margin-bottom: 1.5rem;">
+          🎓 Senior Project Defense Presentation &amp; Machine Learning Core Guide
+        </div>
+
+        <h1 style="font-size: 2.5rem; font-weight: 700; color: #78350F; line-height: 1.25; margin-bottom: 1rem; max-width: 960px;">
+          สถาปัตยกรรม Machine Learning Core Pipeline<br>
+          <span style="background: linear-gradient(135deg, #F59E0B, #D97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            การประเมินระดับสีไข่แดง DSM Fan 4 ขั้นตอน
+          </span>
+        </h1>
+
+        <p style="font-size: 1.1rem; color: #92400E; max-width: 820px; margin-bottom: 2rem;">
+          เจาะลึกกระบวนการทางวิศวกรรมข้อมูล ตั้งแต่การค้นหาตัดภาพไข่แดงอัตโนมัติ การสกัดฟีเจอร์สี CIELAB การเทรนเปรียบเทียบ 5 อัลกอริทึม สู่การส่งออกโมเดล SVR ทำงานแบบ On-Device Offline 100%
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; width: 100%; max-width: 950px; margin-bottom: 1.5rem;">
+          <div class="card" style="background: white; border: 1px solid #FDE68A; text-align: center;">
+            <div style="font-size: 2.2rem; font-weight: 700; color: #B45309; line-height: 1.1;">91.85%</div>
+            <div style="font-size: 0.85rem; color: #78350F; font-weight: 500; margin-top: 0.35rem;">Test R² Score (SVR)</div>
+          </div>
+          <div class="card" style="background: white; border: 1px solid #BFDBFE; text-align: center;">
+            <div style="font-size: 2.2rem; font-weight: 700; color: #1D4ED8; line-height: 1.1;">0.6403</div>
+            <div style="font-size: 0.85rem; color: #1E40AF; font-weight: 500; margin-top: 0.35rem;">Mean Absolute Error (MAE)</div>
+          </div>
+          <div class="card" style="background: white; border: 1px solid #A7F3D0; text-align: center;">
+            <div style="font-size: 2.2rem; font-weight: 700; color: #059669; line-height: 1.1;">92.7%</div>
+            <div style="font-size: 0.85rem; color: #065F46; font-weight: 500; margin-top: 0.35rem;">ความแม่นยำระดับ ±1 คลาส</div>
+          </div>
+          <div class="card" style="background: white; border: 1px solid #DDD6FE; text-align: center;">
+            <div style="font-size: 2.2rem; font-weight: 700; color: #7C3AED; line-height: 1.1;">107 KB</div>
+            <div style="font-size: 0.85rem; color: #5B21B6; font-weight: 500; margin-top: 0.35rem;">ขนาดโมเดล On-Device JSON</div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.9rem; color: #64748B;">
+          ชุดข้อมูล: <strong>647 ภาพ</strong> ครอบคลุม 12 ระดับสีมาตรฐาน (DSM Fan เบอร์ 4 ถึง 15)
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 02: SYSTEM ARCHITECTURE OVERVIEW -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="2">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">🏛️ System Architecture Overview</div>
+          <h2 class="slide-title">สถาปัตยกรรมระบบ 4 ขั้นตอน (End-to-End Pipeline)</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 02 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <div style="text-align: center; margin: 0.5rem 0; padding: 1rem; background: #F8FAFC; border-radius: 16px; border: 1px solid var(--border);">
+          <img src="plots/system_architecture_overview.png" alt="สถาปัตยกรรมระบบ 4 ขั้นตอน" style="max-width: 100%; max-height: 380px; height: auto; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.05);">
+        </div>
+
+        <div class="grid-4" style="margin-top: 0.25rem;">
+          <div class="card card-accent-amber">
+            <strong style="color: #92400E; display: block; font-size: 0.92rem; margin-bottom: 0.2rem;">1. Auto-Crop Yolk</strong>
+            <p style="font-size: 0.82rem; color: #78350F; line-height: 1.45;">
+              <code>batch_auto_crop.py</code><br>
+              ตัดภาพไข่แดงอัตโนมัติด้วย HSV + Connected Components ตัดไข่ขาว/แครอททิ้ง
+            </p>
+          </div>
+
+          <div class="card card-accent-blue">
+            <strong style="color: #1E40AF; display: block; font-size: 0.92rem; margin-bottom: 0.2rem;">2. Color Extraction</strong>
+            <p style="font-size: 0.82rem; color: #1E3A8A; line-height: 1.45;">
+              <code>build_features.py</code><br>
+              สกัดฟีเจอร์สี 18 มิติ (RGB, HSV, CIELAB) พร้อม Circular Mask 42% ตัดแสงสะท้อน
+            </p>
+          </div>
+
+          <div class="card card-accent-green">
+            <strong style="color: #065F46; display: block; font-size: 0.92rem; margin-bottom: 0.2rem;">3. Model Training</strong>
+            <p style="font-size: 0.82rem; color: #064E3B; line-height: 1.45;">
+              <code>train_compare_models.py</code><br>
+              ทดลอง 5 อัลกอริทึมด้วย 5-Fold CV พบ SVR-RBF ชนะเลิศ R²=0.9185, MAE=0.6403
+            </p>
+          </div>
+
+          <div class="card card-accent-purple">
+            <strong style="color: #5B21B6; display: block; font-size: 0.92rem; margin-bottom: 0.2rem;">4. On-Device Deploy</strong>
+            <p style="font-size: 0.82rem; color: #4C1D95; line-height: 1.45;">
+              <code>export_best_model.py</code><br>
+              แปลงเป็น JSON 107 KB ฝังลง Flutter คำนวณแบบ Offline Parity ตรงกันระดับ 10⁻¹³
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 03: STEP 1 - AUTO CROP & HSV MASKING -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="3">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">🔍 ขั้นตอนที่ 1 (1.1) • batch_auto_crop.py</div>
+          <h2 class="slide-title">การตรวจจับและตัดภาพไข่แดงอัตโนมัติด้วย HSV Masking</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 03 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <p>
+          <strong>โจทย์หลัก:</strong> ค้นหาตำแหน่งไข่แดงในภาพถ่ายสดโดยที่ผู้ใช้ไม่ต้องลากมือเอง และต้องมีความทนทานต่อแสงและสีพื้นหลัง
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <h3>🌈 ปริภูมิสี HSV (Hue, Saturation, Value)</h3>
+            <p style="margin-bottom: 0.75rem;">
+              การแยก <em>"เฉดสีแท้จริง (H)"</em> ออกจาก <em>"ความสว่าง (V)"</em> ทำให้ระบบไม่ได้รับผลกระทบจากแสงมืดหรือจ้า:
+            </p>
+
+            <ul style="margin-bottom: 1rem;">
+              <li><strong>Hue (5° – 55°):</strong> ครอบคลุมเฉดสีไข่แดงตั้งแต่สีส้มเข้ม (เบอร์ 15) จนถึงเหลืองอ่อน (เบอร์ 4)</li>
+              <li><strong>Saturation (≥ 0.25) [จุดชี้ขาด]:</strong> บังคับความสดของสี ทำให้ <strong>ตัดพื้นหลัง จานสีขาว และไข่ขาวทิ้ง 100%</strong> เพราะสีเหล่านั้นมี Saturation ต่ำมาก (&lt; 0.25)</li>
+              <li><strong>Value (≥ 0.20):</strong> ตัดเงาดำและมุมมืดของภาพทิ้ง</li>
+            </ul>
+
+            <div class="callout callout-info">
+              <div>
+                <strong>💡 ข้อดีทางวิศวกรรม:</strong> ใช้วิธีทางคณิตศาสตร์ความเร็วสูง ใช้เวลาประมวลผลเพียง ~15 ms เร็วกว่า Deep Learning กว่า 10 เท่า
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3>💻 โค้ดคำนวณการกรองสีจริง (Python)</h3>
+            <div class="code-wrapper">
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> skimage.color <span class="kw">import</span> rgb2hsv
+
+<span class="cm"># 1. แปลงภาพเป็น HSV</span>
+hsv = <span class="fn">rgb2hsv</span>(arr / <span class="num">255.0</span>)
+h = hsv[:, :, <span class="num">0</span>] * <span class="num">360.0</span>
+s = hsv[:, :, <span class="num">1</span>]
+v = hsv[:, :, <span class="num">2</span>]
+
+<span class="cm"># 2. หน้ากากกรองเฉพาะเนื้อไข่แดง</span>
+mask = (
+    (h >= <span class="num">5.0</span>) & (h <= <span class="num">55.0</span>) &
+    (s >= <span class="num">0.25</span>) &
+    (v >= <span class="num">0.20</span>)
+)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 04: STEP 1 - CONNECTED COMPONENT ANALYSIS -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="4">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">🥕 ขั้นตอนที่ 1 (1.2) • batch_auto_crop.py</div>
+          <h2 class="slide-title">การคัดแยกสิ่งรบกวนด้วย Connected Component Analysis</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 04 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <p>
+          <strong>กรณีศึกษาเคสยาก:</strong> หากมีวัตถุสีส้มอื่นอยู่ในภาพ (เช่น ชิ้นแครอท หรือมะเขือเทศ) การใช้พิกเซลรวมจะทำให้กรอบลากคลุมผิดพลาด จึงต้องใช้ <strong>Connected Component Analysis (CCA)</strong> แยกกลุ่มวัตถุอิสระ
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <h3>🔬 หลักการทำงานของ Largest Blob Selection</h3>
+            <ol style="margin-bottom: 1rem;">
+              <li>นำไบนารีมาสก์มาติดฉลาก (Label) พิกเซลที่เชื่อมต่อกันเป็นก้อนๆ</li>
+              <li>คำนวณคุณสมบัติทางกายภาพของแต่ละก้อนด้วย <code>regionprops()</code></li>
+              <li>เลือกเฉพาะ <strong>"ก้อนที่มีพื้นที่ (Area) ใหญ่ที่สุดเพียงก้อนเดียว"</strong></li>
+            </ol>
+
+            <div class="code-wrapper">
+<pre><span class="kw">from</span> skimage.measure <span class="kw">import</span> label, regionprops
+
+lbl = <span class="fn">label</span>(mask)
+props = <span class="fn">regionprops</span>(lbl)
+
+<span class="cm"># เลือกล็อกเป้าเฉพาะก้อนที่มีขนาดใหญ่ที่สุด</span>
+largest = <span class="fn">max</span>(props, key=<span class="kw">lambda</span> p: p.area)
+cy, cx = <span class="fn">int</span>(largest.centroid[<span class="num">0</span>]), <span class="fn">int</span>(largest.centroid[<span class="num">1</span>])</pre>
+            </div>
+          </div>
+
+          <div>
+            <h3>📊 ผลการทดสอบจริงเปรียบเทียบขนาดพื้นที่</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>วัตถุในภาพ</th>
+                  <th>พื้นที่จริง (Pixels)</th>
+                  <th>สถานะการคัดเลือก</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="highlight">
+                  <td><strong>ก้อนไข่แดง (Yolk Blob) 🥚</strong></td>
+                  <td><strong>11,975 พิกเซล</strong></td>
+                  <td><span class="badge-win">ถูกเลือกล็อกเป้า 100% 🎯</span></td>
+                </tr>
+                <tr>
+                  <td>ชิ้นแครอท (Carrot Piece) 🥕</td>
+                  <td>1,329 พิกเซล</td>
+                  <td><span class="badge badge-amber">ตัดทิ้งอัตโนมัติ ❌</span></td>
+                </tr>
+                <tr>
+                  <td>เศษฟองอากาศ/เม็ดทราย ⚪</td>
+                  <td>&lt; 50 พิกเซล</td>
+                  <td><span class="badge badge-amber">ตัดทิ้งอัตโนมัติ ❌</span></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="callout callout-success" style="margin-top: 1rem;">
+              <div>
+                <strong>💡 ข้อพิสูจน์:</strong> ก้อนไข่แดงมีขนาดใหญ่กว่าชิ้นแครอทถึง <strong>9 เท่า</strong> ระบบจึงล็อกเป้าเฉพาะก้อนไข่แดงได้ถูกต้อง 100% โดยไม่หลงทิศทาง
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 05: STEP 1 - SQUARE CROP MATH -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="5">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">📐 ขั้นตอนที่ 1 (1.3) • batch_auto_crop.py</div>
+          <h2 class="slide-title">เรขาคณิตการคำนวณพิกัดตัดภาพจัตุรัส (Square Crop Math)</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 05 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <div style="text-align: center; margin-bottom: 0.5rem;">
+          <img src="plots/crop_math_visual.png" alt="Crop Math Visual" style="max-width: 100%; max-height: 250px; height: auto; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        </div>
+
+        <div class="grid-3">
+          <div class="card" style="border-top: 4px solid #F59E0B;">
+            <h4 style="color: #B45309; margin-bottom: 0.35rem;">สเต็ป 1: หาขนาดกล่องจัตุรัส</h4>
+            <div class="math-box" style="font-size: 0.92rem; padding: 0.5rem;">
+              Size = max(W, H) × 1.05
+            </div>
+            <p style="font-size: 0.82rem; margin-top: 0.5rem;">
+              เลือกด้านที่กว้างหรือสูงที่สุดเพื่อไม่ให้ไข่แหว่ง และคูณ 1.05 เพื่อเผื่อขอบ (Padding 5%) สบายตา
+            </p>
+          </div>
+
+          <div class="card" style="border-top: 4px solid #3B82F6;">
+            <h4 style="color: #1D4ED8; margin-bottom: 0.35rem;">สเต็ป 2: หามุมบนซ้าย (x₁, y₁)</h4>
+            <div class="math-box" style="font-size: 0.92rem; padding: 0.5rem;">
+              x₁ = cx - Size/2<br>y₁ = cy - Size/2
+            </div>
+            <p style="font-size: 0.82rem; margin-top: 0.5rem;">
+              ถอยจากจุดกึ่งกลางมวล (cx, cy) ไปทางซ้ายและขึ้นข้างบนครึ่งกล่อง เพื่อเริ่มตีกรอบครอบคลุมไข่แดง
+            </p>
+          </div>
+
+          <div class="card" style="border-top: 4px solid #10B981;">
+            <h4 style="color: #059669; margin-bottom: 0.35rem;">สเต็ป 3: มุมขวาล่าง &amp; Clamp</h4>
+            <div class="math-box" style="font-size: 0.92rem; padding: 0.5rem;">
+              x₂ = x₁ + Size | y₂ = y₁ + Size
+            </div>
+            <p style="font-size: 0.82rem; margin-top: 0.5rem;">
+              บวกขนาดกล่องไปข้างหน้า พร้อมคำสั่ง <code>max(0, x1)</code> ป้องกันพิกัดทะลุออกนอกขอบภาพ 100%
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: 0.25rem;">
+          <div>
+            <strong>🔢 ตัวอย่างตัวเลขจริง:</strong> ไข่แดงกว้าง 200 px, สูง 180 px, กึ่งกลาง (500, 400) ➔ Size = 200 × 1.05 = <strong>210 px</strong> (ครึ่งกล่อง = 105 px) ➔ ตัดพิกัด <code>image.crop((395, 295, 605, 505))</code> ได้ภาพจัตุรัสเป๊ะ!
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 06: STEP 2 - CIRCULAR MASK 42% -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="6">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">🎯 ขั้นตอนที่ 2 (2.1) • build_features.py</div>
+          <h2 class="slide-title">Center Circular Mask 42% เจาะใจกลางไข่แดงตัดแสงสะท้อน</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 06 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <p>
+          <strong>ปัญหาสำคัญทาง Computer Vision:</strong> <em>"ภาพถ่ายเป็นสี่เหลี่ยม แต่ไข่แดงเป็นวงกลม"</em> หากนำภาพสี่เหลี่ยมที่ตัดได้มาเฉลี่ยค่าสีทันที จะได้ผลลัพธ์ที่ผิดเพี้ยนอย่างมีนัยสำคัญ
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <h3>🚫 2 ปัญหาใหญ่ที่ต้องกำจัด</h3>
+            <ul style="margin-bottom: 1rem;">
+              <li>
+                <strong>มุมทั้ง 4 ของภาพสี่เหลี่ยม:</strong> ยังมีเศษไข่ขาว (Egg Albumen) หรือขอบจานสีขาวปนอยู่ หากนำมาเฉลี่ยจะทำให้ค่าสีจางลง
+              </li>
+              <li>
+                <strong>แสงสะท้อนขอบไข่ (Specular Highlights):</strong> ไข่แดงมีความโค้งนูนและสะท้อนหลอดไฟนีออนด้านบน ทำให้เกิดจุดขาวจ้าหลอกตา
+              </li>
+            </ul>
+
+            <div class="callout callout-warning">
+              <div>
+                <strong>💡 วิธีแก้ปัญหา:</strong> ใช้ <strong>Circular Mask รัศมี 42%</strong> (เว้นขอบ 8%) เจาะดูดเฉพาะเนื้อไข่แดงส่วนที่เรียบและสม่ำเสมอที่สุดใจกลางภาพ
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3>📐 สมการ Circular Mask ใน color_service.py</h3>
+            <div class="code-wrapper">
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># 1. รัศมี 42% ของขนาดด้านที่สั้นที่สุด</span>
+radius = <span class="fn">min</span>(h, w) * <span class="num">0.42</span>
+cy, cx = h / <span class="num">2.0</span>, w / <span class="num">2.0</span>
+
+<span class="cm"># 2. สร้างเรขาคณิตวงกลมด้วยระยะทางแบบยุคลิด</span>
+y_idx, x_idx = np.<span class="fn">ogrid</span>[:h, :w]
+dist_sq = (x_idx - cx)**<span class="num">2</span> + (y_idx - cy)**<span class="num">2</span>
+circle_mask = dist_sq &lt;= (radius**<span class="num">2</span>)
+
+<span class="cm"># 3. สกัดพิกเซลเฉพาะเนื้อไข่แดงแท้ 100%</span>
+clean_pixels = rgb_img[circle_mask]</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 07: STEP 2 - CIELAB & 18-DIM FEATURES -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="7">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">🌈 ขั้นตอนที่ 2 (2.2) • build_features.py</div>
+          <h2 class="slide-title">การแปลงปริภูมิสี CIELAB และการสกัดคุณลักษณะ 18 มิติ</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 07 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <p>
+          ระบบ RGB สะท้อนการเปล่งแสงของหลอดไฟ แต่ไม่ตรงกับการรับรู้สีของตามนุษย์ ระบบจึงแปลงภาพสู่ <strong>CIELAB (CIE 1976)</strong> ซึ่งสะท้อนความเข้มของเม็ดสีแคโรทีนอยด์ได้อย่างสมบูรณ์แบบ
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>มิติฟีเจอร์</th>
+              <th>ระบบสี</th>
+              <th>ความหมายทางกายภาพ</th>
+              <th>พฤติกรรมในไข่แดงแต่ละเกรด</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>R, G, B</strong></td>
+              <td>sRGB</td>
+              <td>ความเข้มแสงแม่สี (0–255)</td>
+              <td>ไข่แดงทุกฟองจะมีค่า R โดดเด่น และ B ต่ำมาก</td>
+            </tr>
+            <tr>
+              <td><strong>L*</strong></td>
+              <td>CIELAB</td>
+              <td>ความสว่าง (Lightness: 0=มืด, 100=สว่าง)</td>
+              <td>ไข่สีส้มเข้ม (เบอร์ 15) ค่า L* จะลดต่ำลงอยู่ที่ ~39</td>
+            </tr>
+            <tr class="highlight">
+              <td><strong>a*</strong></td>
+              <td>CIELAB</td>
+              <td>แกนสีเขียว (-) ถึง สีแดง (+)</td>
+              <td><strong>พระเอกชี้ขาด!</strong> ยิ่งไข่สีเข้ม ค่า a* จะพุ่งสูงขึ้นชัดเจน</td>
+            </tr>
+            <tr>
+              <td><strong>b*</strong></td>
+              <td>CIELAB</td>
+              <td>แกนสีน้ำเงิน (-) ถึง สีเหลือง (+)</td>
+              <td>สะท้อนปริมาณเม็ดสีเหลืองส้ม (Carotenoids)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success" style="margin-top: 0.5rem;">
+          <div>
+            <strong>📁 ผลลัพธ์ของขั้นตอนนี้:</strong> สกัดสถิติ (Mean, Std, Median) ได้ไฟล์ <strong>`data/features.csv`</strong> ขนาด <strong>647 แถว × 6 มิติหลัก</strong> <code>[r, g, b, l, a, b_lab]</code> และคอลัมน์เป้าหมาย <code>fan_score</code> พร้อมสำหรับป้อนให้ AI ฝึกสอน
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 08: STEP 3 - MODEL BENCHMARK (A/B TESTING) -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="8">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">📊 ขั้นตอนที่ 3 (3.1 &amp; 3.2) • train_compare_models.py</div>
+          <h2 class="slide-title">การทดลองเปรียบเทียบโมเดล 5 อัลกอริทึม (A/B Testing)</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 08 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <p>
+          ประเมินโมเดลด้วย <strong>Stratified 5-Fold Cross-Validation</strong> เพื่อป้องกัน Overfitting และทำ <strong>A/B Testing</strong> ระหว่างชุดภาพเดิม (Original) กับชุดภาพตัดอัตโนมัติ (Auto-Crop):
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>อัลกอริทึมที่ทดสอบ</th>
+              <th>Original R²</th>
+              <th>Auto-Crop R²</th>
+              <th>การพัฒนา (Δ R²)</th>
+              <th>Auto-Crop MAE</th>
+              <th>ความแม่นยำ ±1 ระดับ</th>
+              <th>ผลผู้ชนะ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight">
+              <td><strong>SVR (RBF Kernel) 🥇</strong></td>
+              <td>0.9175</td>
+              <td><strong>0.9185</strong></td>
+              <td style="color:#15803D; font-weight:700;">+0.0010</td>
+              <td><strong>0.6403</strong></td>
+              <td><strong>92.7%</strong></td>
+              <td><span class="badge-win">Auto-Crop ชนะเลิศ 🏆</span></td>
+            </tr>
+            <tr>
+              <td>Gradient Boosting Regressor</td>
+              <td>0.9063</td>
+              <td><strong>0.9107</strong></td>
+              <td style="color:#15803D; font-weight:700;">+0.0045</td>
+              <td>0.6554</td>
+              <td>92.3%</td>
+              <td><span class="badge-win">Auto-Crop ชนะเลิศ 🏆</span></td>
+            </tr>
+            <tr>
+              <td>Random Forest Regressor</td>
+              <td>0.9087</td>
+              <td>0.9078</td>
+              <td>-0.0009</td>
+              <td>0.6555</td>
+              <td>92.3%</td>
+              <td>ชุดเดิมชนะ</td>
+            </tr>
+            <tr>
+              <td>Linear Regression</td>
+              <td>0.8718</td>
+              <td><strong>0.8738</strong></td>
+              <td style="color:#15803D; font-weight:700;">+0.0020</td>
+              <td>0.8071</td>
+              <td>84.9%</td>
+              <td><span class="badge-win">Auto-Crop ชนะเลิศ 🏆</span></td>
+            </tr>
+            <tr>
+              <td>Ridge Regression (α=1.0)</td>
+              <td>0.8545</td>
+              <td><strong>0.8568</strong></td>
+              <td style="color:#15803D; font-weight:700;">+0.0022</td>
+              <td>0.8769</td>
+              <td>82.8%</td>
+              <td><span class="badge-win">Auto-Crop ชนะเลิศ 🏆</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success" style="margin-top: 0.5rem;">
+          <div>
+            <strong>🏆 ข้อสรุปจากการทดลอง:</strong> ระบบ Auto-Crop ช่วยเพิ่มความสม่ำเสมอในระดับพิกเซล ทำให้ <strong>SVR ทำคะแนนสูงสุดเป็นอันดับ 1 ในทุกตัวชี้วัด</strong> (R² สูงสุด 0.9185 และ MAE ต่ำสุด 0.6403)
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 09: STEP 3 - WHY SVR WON -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="9">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">🧠 ขั้นตอนที่ 3 (3.3) • ทฤษฎี Support Vector Regression</div>
+          <h2 class="slide-title">ทำไม SVR ถึงชนะเลิศ? (Deep Dive SVR Science)</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 09 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="card card-accent-amber">
+            <h4 style="color: #B45309; margin-bottom: 0.35rem;">1. Gaussian RBF Kernel</h4>
+            <p style="font-size: 0.88rem;">
+              ความสัมพันธ์ระหว่างค่าสีกับระดับความเข้มไข่แดงมีลักษณะ <strong>Non-linear (ไม่เป็นเส้นตรง)</strong> ฟังก์ชัน Gaussian RBF สามารถดัดระนาบ Hyperplane ให้โค้งรับพฤติกรรมสีจริงได้อย่างสมบูรณ์แบบ
+            </p>
+          </div>
+
+          <div class="card card-accent-blue">
+            <h4 style="color: #1D4ED8; margin-bottom: 0.35rem;">2. ε-Insensitive Tube</h4>
+            <p style="font-size: 0.88rem;">
+              สร้างท่อยอมรับความคลาดเคลื่อน ε = 0.1 ทำให้โมเดล <strong>ไม่ถูกรบกวนจากสัญญาณสั่นไหวเล็กๆ</strong> แตกต่างจาก OLS Regression ที่พยายามลากเส้นให้ผ่านจุดรบกวนทุกจุด
+            </p>
+          </div>
+
+          <div class="card card-accent-green">
+            <h4 style="color: #065F46; margin-bottom: 0.35rem;">3. ทฤษฎี Support Vectors</h4>
+            <p style="font-size: 0.88rem;">
+              โมเดลตัดสินใจจากเวกเตอร์สำคัญรอบขอบเขต (556 จุด จาก 647 จุด) ทำให้มีความทนทานต่อจุดบกพร่องสูงมาก ไม่ท่องจำข้อมูล (Resistant to Overfitting)
+            </p>
+          </div>
+        </div>
+
+        <div style="margin-top: 0.5rem;">
+          <h3>📈 การกระจายตัวของ Support Vectors ในโมเดลจริง</h3>
+          <div class="grid-2">
+            <div class="card">
+              <strong>สถิติการกระจายตัวใน ε-Tube:</strong>
+              <ul style="font-size: 0.85rem; margin-top: 0.35rem;">
+                <li>จุดที่อยู่ภายในท่อ (Zero Loss): <strong>91 จุด (14.1%)</strong></li>
+                <li>จุดที่เป็น Support Vectors บนขอบและนอกท่อ: <strong>556 จุด (85.9%)</strong></li>
+                <li>จุดตกค้างหลุดขอบรุนแรง (Slack &gt; 1.0): <strong>เพียง 12 จุด</strong></li>
+              </ul>
+            </div>
+            <div class="card">
+              <strong>ความสำคัญของพารามิเตอร์:</strong>
+              <ul style="font-size: 0.85rem; margin-top: 0.35rem;">
+                <li><strong>C = 10.0:</strong> ควบคุมโทษของจุดที่หลุดนอกท่อ (Trade-off)</li>
+                <li><strong>γ (Gamma) = 0.1667:</strong> ควบคุมรัศมีอิทธิพลของแต่ละ Support Vector</li>
+                <li><strong>ε = 0.10:</strong> ขนาดความกว้างของช่องว่างปลอดภัยรอบเส้นทำนาย</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 10: STEP 4 - DUAL EXPORT & JSON WEIGHTS -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="10">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">📦 ขั้นตอนที่ 4 (4.1 &amp; 4.2) • export_best_model.py</div>
+          <h2 class="slide-title">สถาปัตยกรรม Dual Export &amp; โครงสร้าง model_weights.json</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 10 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <p>
+          เพื่อรองรับการใช้งานที่ยืดหยุ่น โมเดล SVR จึงถูกส่งออกเป็น <strong>2 รูปแบบ (Dual Export)</strong>:
+        </p>
+
+        <div class="grid-2">
+          <div class="card card-accent-blue">
+            <h4 style="color: #1D4ED8; margin-bottom: 0.35rem;">1. สำหรับ Backend API (Python)</h4>
+            <div style="font-family: 'Fira Code', monospace; font-size: 0.85rem; background: white; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid #BFDBFE; margin: 0.35rem 0;">
+              📁 egg_api/model/model.pkl (~40 KB)
+            </div>
+            <p style="font-size: 0.85rem;">
+              บันทึกเป็น Scikit-Learn Pipeline โหลดด้วย Joblib บน FastAPI เซิร์ฟเวอร์ ทำงานผ่าน REST API แบบดั้งเดิม
+            </p>
+          </div>
+
+          <div class="card card-accent-amber">
+            <h4 style="color: #B45309; margin-bottom: 0.35rem;">2. สำหรับ Mobile App (On-Device AI)</h4>
+            <div style="font-family: 'Fira Code', monospace; font-size: 0.85rem; background: white; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid #FDE68A; margin: 0.35rem 0;">
+              📁 egg_yolk_app/assets/model_weights.json (107 KB)
+            </div>
+            <p style="font-size: 0.85rem;">
+              แกะพารามิเตอร์คณิตศาสตร์เป็น JSON ข้อความล้วน ฝังลงแอปมือถือ คำนวณเพียวๆ ออฟไลน์ 100% ไม่ต้องใช้อินเทอร์เน็ต
+            </p>
+          </div>
+        </div>
+
+        <h3>🔬 โครงสร้างข้อมูลภายใน `model_weights.json`</h3>
+        <div class="code-wrapper">
+<pre>{
+  <span class="str">"model_type"</span>: <span class="str">"SVR_RBF"</span>,
+  <span class="str">"r2_score"</span>: <span class="num">0.9185</span>,
+  <span class="str">"scaler_mean"</span>: [<span class="num">197.819</span>, <span class="num">130.447</span>, <span class="num">23.890</span>, <span class="num">60.006</span>, <span class="num">18.296</span>, <span class="num">60.774</span>],
+  <span class="str">"scaler_scale"</span>: [<span class="num">22.926</span>, <span class="num">25.010</span>, <span class="num">14.773</span>, <span class="num">8.622</span>, <span class="num">7.334</span>, <span class="num">7.016</span>],
+  <span class="str">"gamma"</span>: <span class="num">0.16666666666666666</span>,
+  <span class="str">"intercept"</span>: <span class="num">7.84712488</span>,
+  <span class="str">"support_vectors_count"</span>: <span class="num">556</span>,
+  <span class="str">"dual_coef"</span>: [<span class="num">1.423</span>, <span class="num">-0.892</span>, ...],       <span class="cm">/* น้ำหนัก α จำนวน 556 ตัว */</span>
+  <span class="str">"support_vectors"</span>: [[...], [...], ...] <span class="cm">/* เมทริกซ์ 556 x 6 ฟีเจอร์ */</span>
+}</pre>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 11: STEP 4 - ON-DEVICE MATH & PARITY CHECK -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="11">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">⚡ ขั้นตอนที่ 4 (4.3) • On-Device Pure Math Inference</div>
+          <h2 class="slide-title">สมการคณิตศาสตร์เพียวๆ &amp; การทดสอบ Parity 100%</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 11 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <p>
+          เมื่อโหลดตัวเลขจาก <code>model_weights.json</code> เข้าสู่หน่วยความจำของสมาร์ตโฟน จะสามารถคำนวณทำนายคะแนนได้ทันทีในเวลาไม่ถึง <strong>1 มิลลิวินาที</strong> ผ่านสูตร:
+        </p>
+
+        <div class="math-box">
+          f(x) = ∑ [ αᵢ × exp( -γ ‖ (x - μ)/σ - SVᵢ ‖² ) ] + Intercept
+        </div>
+
+        <div class="grid-2" style="margin-top: 0.5rem;">
+          <div>
+            <h3>🛠️ ขั้นตอนการคำนวณ 3 สเต็ปบนมือถือ</h3>
+            <ol style="font-size: 0.88rem;">
+              <li><strong>StandardScaler:</strong> นำเวกเตอร์สี 6 มิติ \(x\) มาลบค่าเฉลี่ย \(\mu\) และหารส่วนเบี่ยงเบน \(\sigma\)</li>
+              <li><strong>RBF Kernel:</strong> คำนวณระยะห่างแบบ Euclidean Squared กับ Support Vectors ทั้ง 556 จุด แล้วผ่านฟังก์ชัน Exponential \(\exp(-\gamma d^2)\)</li>
+              <li><strong>Dot Product &amp; Bias:</strong> คูณสะสมกับน้ำหนัก \(\alpha_i\) และบวกค่า Intercept ได้เกรดไข่ทันที</li>
+            </ol>
+          </div>
+
+          <div>
+            <h3>✅ Numerical Parity Verification</h3>
+            <div class="card card-accent-green" style="padding: 1rem;">
+              <strong style="color: #065F46; font-size: 1rem;">ผลการตรวจสอบความเที่ยงตรง:</strong>
+              <p style="font-size: 0.85rem; color: #064E3B; margin: 0.5rem 0;">
+                ป้อนข้อมูลทดสอบค่าสีชุดเดียวกันเข้าสู่ Scikit-Learn (Python) และเข้าสู่สูตรคณิตศาสตร์ JSON (Dart/JavaScript)
+              </p>
+              <div style="background: white; border: 1px solid #A7F3D0; border-radius: 8px; padding: 0.6rem; text-align: center; font-family: 'Fira Code', monospace; font-size: 0.95rem; font-weight: 700; color: #065F46;">
+                |Δ| = 2.0 × 10⁻¹³ (ทศนิยม 13 ตำแหน่ง)
+              </div>
+              <p style="font-size: 0.82rem; color: #065F46; margin-top: 0.5rem;">
+                สรุป: ให้ผลลัพธ์ตรงกัน 100% สมบูรณ์แบบ ย้ายจากเซิร์ฟเวอร์สู่มือถือโดยไม่มีความคลาดเคลื่อน
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 12: THESIS DEFENSE - WHY NOT YOLO? -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="12">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">🎓 Thesis Defense Q&amp;A • คำถามยอดฮิต</div>
+          <h2 class="slide-title">ทำไมถึงเลือกใช้ HSV แทนที่จะใช้ YOLOv8? (Why Not YOLO?)</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 12 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <p>
+          กรรมการสอบมักถามว่า: <em>"ทำไมไม่ใช้โมเดล Deep Learning ยอดนิยมอย่าง YOLOv8 ตรวจจับไข่แดง?"</em> สามารถตอบได้ด้วย <strong>4 เหตุผลทางวิศวกรรม</strong>:
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ปัจจัยเปรียบเทียบ</th>
+              <th>YOLOv8 (Deep Learning)</th>
+              <th>HSV + Connected Components (ของเรา)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>ขนาดโมเดล</strong></td>
+              <td>15 – 30 MB</td>
+              <td><span class="badge-win">0 MB (ใช้สมการทางคณิตศาสตร์) 🏆</span></td>
+            </tr>
+            <tr>
+              <td><strong>เวลาประมวลผล (Latency)</strong></td>
+              <td>150 – 300 ms (กินแบต, เครื่องร้อน)</td>
+              <td><span class="badge-win">10 – 20 ms (เร็วกว่า 10 เท่า) 🏆</span></td>
+            </tr>
+            <tr>
+              <td><strong>ความพึ่งพาไลบรารี</strong></td>
+              <td>ต้องลง TFLite / ONNX (แอปบวม)</td>
+              <td><span class="badge-win">รัน Native Code บนมือถือได้ทันที 🏆</span></td>
+            </tr>
+            <tr>
+              <td><strong>ความโปร่งใส (Explainability)</strong></td>
+              <td>Black-box ตรวจสอบพิกเซลไม่ได้</td>
+              <td><span class="badge-win">White-box อธิบายที่มาได้ตามหลักฟิสิกส์ 🏆</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success" style="margin-top: 0.5rem;">
+          <div>
+            <strong>🎯 หมัดเด็ดคำตอบกรรมการ:</strong> ใน <code>batch_auto_crop.py</code> ระบบได้สร้างไฟล์พิกัด Bounding Box <code>.txt</code> (Normalized YOLO Format) ครบทั้ง 647 รูปโดยอัตโนมัติ (Auto-Annotation) เพื่อให้นักวิจัยรุ่นต่อไปนำไปเทรน YOLOv8 ได้ทันทีโดยไม่ต้องเสียเวลามานั่ง Label ใหม่เลยแม้แต่วินาทีเดียว!
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 13: THESIS DEFENSE - KEY QUESTIONS -->
+    <!-- ================================================================= -->
+    <article class="slide" data-slide="13">
+      <div class="slide-header">
+        <div>
+          <div class="slide-category">🎓 Thesis Defense Q&amp;A • รวมคำถามเจาะลึก 4 ข้อ</div>
+          <h2 class="slide-title">รวมประเด็นคำถาม-คำตอบสำคัญในห้องสอบป้องกัน</h2>
+        </div>
+        <div class="slide-number-pill">สไลด์ 13 / 13</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="qa-box open">
+          <div class="qa-title">1. ถ้ามีวัตถุสีส้มอื่น เช่น แครอท ระบบจะตัดภาพผิดพลาดหรือไม่?</div>
+          <div class="qa-content">
+            ไม่ผิดพลาดครับ เพราะระบบใช้ <strong>Connected Component Analysis</strong> สแกนแยกวัตถุอิสระ และเลือกล็อกเป้าเฉพาะก้อนที่มีพื้นที่ใหญ่ที่สุด (Largest Blob) ซึ่งไข่แดงมีขนาดใหญ่ถึง 11,975 พิกเซล ในขณะที่แครอทมีขนาดเพียง 1,329 พิกเซล (ต่างกัน 9 เท่า) ระบบจึงตัดแครอททิ้งไป 100% ครับ
+          </div>
+        </div>
+
+        <div class="qa-box">
+          <div class="qa-title">2. หลังจากตัดภาพเป็นสี่เหลี่ยมแล้ว ทำไมยังต้องเจาะวงกลม Mask 42% อีกรอบ?</div>
+          <div class="qa-content">
+            เพราะภาพถ่ายเป็นสี่เหลี่ยมแต่ไข่แดงเป็นวงกลมครับ มุมทั้ง 4 ของภาพที่ตัดแล้วจะยังมีเศษไข่ขาวหรือขอบจานติดมาด้วยเสมอ นอกจากนี้บริเวณขอบไข่แดงมักสะท้อนแสงไฟนีออน การเจาะเฉพาะวงกลมรัศมี 42% ตรงกลาง จะช่วยรับประกันว่าได้ดึงเฉพาะ <strong>เนื้อไข่แดงแท้ที่มีสีสม่ำเสมอที่สุด</strong> ครับ
+          </div>
+        </div>
+
+        <div class="qa-box">
+          <div class="qa-title">3. ทำไมกราฟ Actual vs Predicted ของโมเดล SVR ถึงเป็นเส้นตรง 45 องศา?</div>
+          <div class="qa-content">
+            เส้นตรงสีแดงคือ <strong>Identity Line (y = x)</strong> ซึ่งเป็นเส้นอุดมคติที่แสดงว่าโมเดลทำนายได้ตรงกับคะแนนจริง ยิ่งจุดข้อมูลเกาะชิดเส้นตรงมากเท่าใดก็ยิ่งแสดงว่าโมเดลแม่นยำสูง (R² = 0.9185) ส่วนความโค้ง Non-linear ของ SVR RBF จะไปทำงานอยู่ใน Feature Space ระหว่างมิติของค่าสีกับระดับคะแนนครับ
+          </div>
+        </div>
+
+        <div class="qa-box">
+          <div class="qa-title">4. ผลการทดลอง A/B Testing ยืนยันอะไรเกี่ยวกับระบบ Auto-Crop?</div>
+          <div class="qa-content">
+            ยืนยันว่าการตัดภาพด้วย <strong>Auto-Crop ช่วยเพิ่มความแม่นยำให้ AI ได้จริงครับ</strong> โดยโมเดล SVR มีค่า R² สูงขึ้นจาก 0.9175 เป็น 0.9185 และค่า MAE ลดลงเหลือ 0.6403 เนื่องจากคอมพิวเตอร์ตัดภาพด้วยความสม่ำเสมอในระดับพิกเซลสูงกว่าตามนุษย์ ทำให้ข้อมูลฟีเจอร์สีมีความนิ่งและขจัดสัญญาณรบกวนได้ดีกว่าครับ
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </main>
+
+  <!-- Overview Modal (Grid View of all slides) -->
+  <div class="overview-modal" id="overviewModal">
+    <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1300px; margin: 0 auto 1.5rem auto;">
+      <h3 style="color: white; font-size: 1.3rem;">🗂️ ภาพรวมสไลด์ทั้งหมด (13 สไลด์)</h3>
+      <button class="btn-icon" id="btnCloseOverview">✕ ปิดหน้าต่าง</button>
+    </div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <footer class="bottom-bar">
+    <div class="nav-btn-group">
+      <button class="btn-nav" id="btnPrev" title="สไลด์ก่อนหน้า (←)">
+        <span>◀</span> ก่อนหน้า
+      </button>
+      <button class="btn-nav" id="btnNext" title="สไลด์ถัดไป (→)">
+        ถัดไป <span>▶</span>
+      </button>
+    </div>
+
+    <div class="progress-container" id="progressContainer" title="คลิกเพื่อข้ามไปยังสไลด์ที่ต้องการ">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="slide-counter" id="slideCounter">
+      01 / 13
+    </div>
+  </footer>
+
+  <!-- Interactive Slide Controller Script -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 13;
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progressBar');
+    const slideCounter = document.getElementById('slideCounter');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnOverview = document.getElementById('btnOverview');
+    const btnCloseOverview = document.getElementById('btnCloseOverview');
+    const overviewModal = document.getElementById('overviewModal');
+    const overviewGrid = document.getElementById('overviewGrid');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const btnMode = document.getElementById('btnMode');
+    const progressContainer = document.getElementById('progressContainer');
+
+    // Slide Titles for Overview Modal
+    const slideMetadata = [
+      { num: 1, title: "หน้าปกสถาปัตยกรรม Machine Learning Core Pipeline" },
+      { num: 2, title: "สถาปัตยกรรมระบบ 4 ขั้นตอน (End-to-End Pipeline)" },
+      { num: 3, title: "ขั้นตอนที่ 1 (1.1): Auto-Crop ด้วย HSV Masking" },
+      { num: 4, title: "ขั้นตอนที่ 1 (1.2): การคัดแยกสิ่งรบกวนด้วย CCA (เคสแครอท)" },
+      { num: 5, title: "ขั้นตอนที่ 1 (1.3): เรขาคณิตคำนวณ Square Crop Bounding Box" },
+      { num: 6, title: "ขั้นตอนที่ 2 (2.1): Center Circular Mask 42% เจาะใจกลางไข่" },
+      { num: 7, title: "ขั้นตอนที่ 2 (2.2): การแปลงปริภูมิสี CIELAB & ตารางฟีเจอร์" },
+      { num: 8, title: "ขั้นตอนที่ 3 (3.1-3.2): การทดลองเปรียบเทียบโมเดล 5 ชนิด (A/B Testing)" },
+      { num: 9, title: "ขั้นตอนที่ 3 (3.3): ทำไม SVR ถึงชนะเลิศ? (RBF & Support Vectors)" },
+      { num: 10, title: "ขั้นตอนที่ 4 (4.1-4.2): สถาปัตยกรรม Dual Export & model_weights.json" },
+      { num: 11, title: "ขั้นตอนที่ 4 (4.3): Pure Math Inference & Numerical Parity 100%" },
+      { num: 12, title: "คำถามสอบป้องกัน (1): ทำไมใช้ HSV แทนที่จะใช้ YOLOv8?" },
+      { num: 13, title: "คำถามสอบป้องกัน (2): รวมคำถามเจาะลึก 4 ข้อสำคัญในห้องสอบ" }
+    ];
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        if (idx + 1 === currentSlide) {
+          s.classList.add('active');
+          s.scrollTop = 0;
+        } else {
+          s.classList.remove('active');
+        }
+      });
+
+      const pad = (n) => n < 10 ? '0' + n : n;
+      slideCounter.textContent = `${pad(currentSlide)} / ${pad(totalSlides)}`;
+      progressBar.style.width = `${((currentSlide - 1) / (totalSlides - 1)) * 100}%`;
+
+      btnPrev.disabled = (currentSlide === 1);
+      btnNext.disabled = (currentSlide === totalSlides);
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(n) {
+      if (n >= 1 && n <= totalSlides) {
+        currentSlide = n;
+        updateSlide();
+        closeOverview();
+      }
+    }
+
+    function buildOverview() {
+      overviewGrid.innerHTML = '';
+      slideMetadata.forEach(meta => {
+        const card = document.createElement('div');
+        card.className = `overview-card ${meta.num === currentSlide ? 'current' : ''}`;
+        card.innerHTML = `
+          <div>
+            <div class="card-num">SLIDE ${meta.num < 10 ? '0' + meta.num : meta.num}</div>
+            <div class="card-title">${meta.title}</div>
+          </div>
+          <div style="font-size: 0.75rem; color: #94A3B8; text-align: right;">คลิกเพื่อเปิด ➔</div>
+        `;
+        card.addEventListener('click', () => goToSlide(meta.num));
+        overviewGrid.appendChild(card);
+      });
+    }
+
+    function openOverview() {
+      buildOverview();
+      overviewModal.classList.add('active');
+    }
+
+    function closeOverview() {
+      overviewModal.classList.remove('active');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => alert(`Error: ${err.message}`));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle('scroll-mode');
+      const isScroll = document.body.classList.contains('scroll-mode');
+      btnMode.classList.toggle('active', isScroll);
+      btnMode.innerHTML = isScroll ? '<span>🎦</span> โหมดสไลด์' : '<span>📑</span> โหมดเอกสาร';
+    }
+
+    // Event Listeners
+    btnNext.addEventListener('click', nextSlide);
+    btnPrev.addEventListener('click', prevSlide);
+    btnOverview.addEventListener('click', openOverview);
+    btnCloseOverview.addEventListener('click', closeOverview);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    btnMode.addEventListener('click', toggleMode);
+
+    progressContainer.addEventListener('click', (e) => {
+      const rect = progressContainer.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const ratio = clickX / rect.width;
+      const targetSlide = Math.min(totalSlides, Math.max(1, Math.round(ratio * (totalSlides - 1)) + 1));
+      goToSlide(targetSlide);
+    });
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (document.body.classList.contains('scroll-mode')) return;
+
+      if (overviewModal.classList.contains('active')) {
+        if (e.key === 'Escape') closeOverview();
+        return;
+      }
+
+      switch(e.key) {
+        case 'ArrowRight':
+        case 'PageDown':
+        case ' ':
+          e.preventDefault();
+          nextSlide();
+          break;
+        case 'ArrowLeft':
+        case 'PageUp':
+          e.preventDefault();
+          prevSlide();
+          break;
+        case 'Home':
+          e.preventDefault();
+          goToSlide(1);
+          break;
+        case 'End':
+          e.preventDefault();
+          goToSlide(totalSlides);
+          break;
+        case 'f':
+        case 'F':
+          toggleFullscreen();
+          break;
+        case 'o':
+        case 'O':
+          openOverview();
+          break;
+        case 'm':
+        case 'M':
+          toggleMode();
+          break;
+        case 'Escape':
+          closeOverview();
+          break;
+      }
+    });
+
+    document.getElementById('btnHelp').addEventListener('click', () => {
+      alert(
+        "⌨️ คีย์ลัดสำหรับการนำเสนอ:\n\n" +
+        "• ถัดไป: ลูกศรขวา (→), Spacebar หรือ Page Down\n" +
+        "• ย้อนกลับ: ลูกศรซ้าย (←) หรือ Page Up\n" +
+        "• เต็มจอ: กด F\n" +
+        "• ดูภาพรวมสไลด์ทั้งหมด: กด O\n" +
+        "• สลับโหมดนำเสนอ / โหมดเอกสารอ่านยาว: กด M\n" +
+        "• ไปสไลด์แรก / สไลด์สุดท้าย: กด Home / End"
+      );
+    });
+
+    // Q&A Accordion in Slide 13
+    document.querySelectorAll('.qa-title').forEach(title => {
+      title.addEventListener('click', () => {
+        const box = title.parentElement;
+        box.classList.toggle('open');
+      });
+    });
+
+    // Initial setup
+    updateSlide();
+  </script>
+</body>
+</html>

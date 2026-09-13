@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📱 Flutter App Tutorial — สำหรับคนที่รู้ Python</title>
+<style>
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --card: #1e1e32;
+    --accent: #ffa726; --accent2: #ff7043; --accent3: #66bb6a;
+    --accent4: #42a5f5; --purple: #ab47bc;
+    --text: #e0e0e0; --muted: #9e9e9e; --code-bg: #12121f;
+    --line-hl: rgba(255,167,38,0.08); --border: #2a2a40;
+    --dart: #54c5f8; --python: #ffd43b;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Kanit',sans-serif; background:var(--bg); color:var(--text); line-height:1.75; }
+  .topnav { position:sticky; top:0; z-index:100; background:var(--surface); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .topnav h1 { font-size:1.1rem; color:var(--accent); white-space:nowrap; margin-right:8px; }
+  .topnav a { color:var(--muted); text-decoration:none; font-size:.82rem; padding:4px 10px; border-radius:6px; transition:.2s; white-space:nowrap; }
+  .topnav a:hover, .topnav a.active { color:#fff; background:rgba(255,167,38,.15); }
+  .container { max-width:1080px; margin:0 auto; padding:28px 20px 100px; }
+  section { margin-bottom:64px; scroll-margin-top:68px; }
+  h2 { font-size:1.55rem; color:var(--accent); margin-bottom:8px; padding-bottom:8px; border-bottom:2px solid var(--border); display:flex; align-items:center; gap:10px; }
+  h2 .badge { font-size:.72rem; font-weight:800; padding:3px 10px; border-radius:10px; background:var(--accent); color:#000; }
+  h2 .badge.service { background:var(--accent4); }
+  h2 .badge.model { background:var(--accent3); }
+  h2 .badge.screen { background:var(--purple); }
+  h3 { font-size:1.12rem; color:var(--accent2); margin:26px 0 10px; }
+  h4 { font-size:.98rem; color:var(--accent3); margin:18px 0 8px; }
+  p { margin:8px 0; }
+  .intro-box { background:var(--card); padding:18px 22px; border-radius:12px; border-left:4px solid var(--accent); margin:16px 0 20px; }
+  .concept { background:linear-gradient(135deg,#1a237e22,#0d47a122); border:1px solid #1565c033; padding:14px 18px; border-radius:10px; margin:12px 0; }
+  .concept strong { color:var(--accent4); }
+  .py-dart { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+  @media(max-width:680px){ .py-dart { grid-template-columns:1fr; } }
+  .py-box { border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .py-box .lang-hdr { padding:6px 14px; font-size:.78rem; font-weight:700; }
+  .py-box.python .lang-hdr { background:#3d3200; color:var(--python); }
+  .py-box.dart .lang-hdr { background:#002a3d; color:var(--dart); }
+  .py-box pre { background:var(--code-bg); padding:12px 14px; font-size:.8rem; overflow-x:auto; }
+  .code-wrap { margin:14px 0; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .code-hdr { background:var(--surface); padding:7px 14px; font-size:.79rem; color:var(--accent); display:flex; justify-content:space-between; }
+  .code-hdr .fn { color:var(--accent3); }
+  pre { background:var(--code-bg); padding:14px 16px; overflow-x:auto; font-size:.81rem; line-height:1.65; }
+  code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; }
+  .ln { display:block; padding:0 6px; }
+  .ln:hover { background:var(--line-hl); }
+  .lnum { display:inline-block; width:30px; color:#444; text-align:right; margin-right:14px; user-select:none; }
+  .kw { color:#c792ea; } .fn { color:#82aaff; } .st { color:#c3e88d; }
+  .cm { color:#4a5568; font-style:italic; } .num { color:#f78c6c; }
+  .op { color:#89ddff; } .dec { color:#ffcb6b; } .bi { color:#82aaff; }
+  .ty { color:#ffcb6b; } .an { color:#ff9800; }
+  .ann { display:block; background:rgba(255,167,38,.07); border-left:3px solid var(--accent); padding:9px 14px; margin:4px 0 4px 44px; border-radius:0 8px 8px 0; font-size:.83rem; color:#ccc; }
+  .ann::before { content:'💡 '; }
+  .ann.warn { border-color:var(--accent2); background:rgba(255,112,67,.07); }
+  .ann.warn::before { content:'⚠️ '; }
+  .ann.math { border-color:var(--purple); background:rgba(171,71,188,.07); }
+  .ann.math::before { content:'📐 '; }
+  .ann.dart { border-color:var(--dart); background:rgba(84,197,248,.07); }
+  .ann.dart::before { content:'🎯 '; }
+  .flow-wrap { background:var(--card); padding:20px; border-radius:12px; margin:16px 0; overflow-x:auto; }
+  .flow { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; min-width:max-content; }
+  .fb { background:var(--surface); border:1px solid var(--accent); padding:8px 14px; border-radius:8px; color:var(--accent); font-size:.82rem; font-weight:600; text-align:center; }
+  .fb.active { background:var(--accent); color:#000; }
+  .fb.done { border-color:var(--accent3); color:var(--accent3); }
+  .fb.blue { border-color:var(--accent4); color:var(--accent4); }
+  .fa { color:var(--muted); font-size:1.1rem; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:.84rem; }
+  th { background:var(--surface); color:var(--accent); padding:9px 12px; text-align:left; border-bottom:2px solid var(--border); }
+  td { padding:8px 12px; border-bottom:1px solid var(--border); }
+  tr:hover td { background:rgba(255,255,255,.02); }
+  td code { background:rgba(255,255,255,.07); padding:1px 6px; border-radius:4px; font-size:.82rem; }
+  .toc { background:var(--card); padding:18px 24px; border-radius:12px; margin:20px 0; }
+  .toc-title { font-size:1.05rem; color:var(--accent); margin-bottom:10px; font-weight:700; }
+  .toc ol { padding-left:20px; }
+  .toc li { margin:5px 0; }
+  .toc a { color:var(--text); text-decoration:none; font-size:.9rem; }
+  .toc a:hover { color:var(--accent); }
+  .success { background:linear-gradient(135deg,#1b5e2022,#2e7d3222); border:1px solid #43a04755; padding:13px 17px; border-radius:10px; margin:12px 0; }
+  .success strong { color:#81c784; }
+  .tag { display:inline-block; font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+  .tag.async { background:#1a237e; color:#90caf9; }
+  .tag.static { background:#1b5e20; color:#a5d6a7; }
+  .tag.ui { background:#4a1080; color:#ce93d8; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <h1>📱 Flutter Tutorial</h1>
+  <a href="#intro">เริ่มต้น</a>
+  <a href="#main">main.dart</a>
+  <a href="#model">Models</a>
+  <a href="#local">LocalPredict</a>
+  <a href="#autocrop">AutoCrop</a>
+  <a href="#colorext">ColorExtractor</a>
+  <a href="#home">HomeScreen</a>
+  <a href="#result">ResultScreen</a>
+  <a href="#summary">สรุป</a>
+</nav>
+
+<div class="container">
+
+<section id="intro">
+<h2>🐍→🎯 จาก Python สู่ Dart/Flutter — มือใหม่ต้องรู้ก่อน</h2>
+<div class="intro-box">
+  <p>คุณรู้ Python แล้ว เรียน Dart ง่ายมากครับ เพราะ Dart ได้รับอิทธิพลจาก Python, Java และ JavaScript
+  Tutorial นี้จะ <strong>เปรียบเทียบ Python vs Dart</strong> ทุกจุดสำคัญ เพื่อให้เข้าใจโค้ดได้ทันที</p>
+</div>
+
+<h3>📚 ความแตกต่างสำคัญ Python → Dart</h3>
+<div class="py-dart">
+  <div class="py-box python">
+    <div class="lang-hdr">🐍 Python</div>
+    <pre><code><span class="cm"># Dynamic typing</span>
+x = <span class="num">42</span>
+y = <span class="st">"hello"</span>
+z = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]
+
+<span class="kw">def</span> <span class="fn">add</span>(a, b):
+    <span class="kw">return</span> a + b
+
+<span class="kw">async def</span> <span class="fn">fetch</span>():
+    result = <span class="kw">await</span> do_something()
+    <span class="kw">return</span> result
+
+<span class="kw">class</span> <span class="dec">Dog</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, name):
+        self.name = name</code></pre>
+  </div>
+  <div class="py-box dart">
+    <div class="lang-hdr">🎯 Dart</div>
+    <pre><code><span class="cm">// Static typing (ต้องระบุชนิดข้อมูล)</span>
+<span class="ty">int</span> x = <span class="num">42</span>;
+<span class="ty">String</span> y = <span class="st">"hello"</span>;
+<span class="ty">List&lt;int&gt;</span> z = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>];
+
+<span class="ty">int</span> <span class="fn">add</span>(<span class="ty">int</span> a, <span class="ty">int</span> b) {
+  <span class="kw">return</span> a + b;
+}
+
+<span class="ty">Future</span>&lt;<span class="ty">String</span>&gt; <span class="fn">fetch</span>() <span class="kw">async</span> {
+  <span class="ty">String</span> result = <span class="kw">await</span> doSomething();
+  <span class="kw">return</span> result;
+}
+
+<span class="kw">class</span> <span class="dec">Dog</span> {
+  <span class="ty">String</span> name;
+  Dog({<span class="kw">required</span> this.name});
+}</code></pre>
+  </div>
+</div>
+
+<table>
+  <tr><th>แนวคิด</th><th>Python</th><th>Dart</th></tr>
+  <tr><td>ชนิดข้อมูล</td><td>Dynamic</td><td>Static (ต้องบอกชนิด) หรือ <code>var</code></td></tr>
+  <tr><td>Null Safety</td><td>ทุกตัวแปรเป็น None ได้</td><td>ต้องเขียน <code>String?</code> ถ้าอยากให้เป็น null</td></tr>
+  <tr><td>async/await</td><td><code>async def</code> + <code>await</code></td><td><code>Future&lt;T&gt;</code> + <code>async</code> + <code>await</code></td></tr>
+  <tr><td>List Comprehension</td><td><code>[x*2 for x in list]</code></td><td><code>list.map((x) => x*2).toList()</code></td></tr>
+  <tr><td>Integer Division</td><td><code>a // b</code></td><td><code>a ~/ b</code></td></tr>
+  <tr><td>String Interpolation</td><td><code>f'Hello {name}'</code></td><td><code>'Hello $name'</code></td></tr>
+  <tr><td>Ternary</td><td><code>a if cond else b</code></td><td><code>cond ? a : b</code></td></tr>
+  <tr><td>Semicolon</td><td>ไม่ต้องมี</td><td><strong>ต้องมี ; ทุกบรรทัด</strong></td></tr>
+</table>
+
+<div class="toc">
+  <div class="toc-title">📖 สารบัญ Flutter App Tutorial</div>
+  <ol>
+    <li><a href="#main">main.dart — จุดเริ่มต้นของแอป</a></li>
+    <li><a href="#model">Models — โครงสร้างข้อมูล (prediction_result.dart)</a></li>
+    <li><a href="#local">LocalPredictService — Engine ทำนาย On-Device (หัวใจหลัก)</a></li>
+    <li><a href="#autocrop">AutoCropService — ตรวจจับไข่แดงอัตโนมัติ (BFS)</a></li>
+    <li><a href="#colorext">ColorExtractor — สกัดสี (สำหรับ Unit Test)</a></li>
+    <li><a href="#home">HomeScreen — หน้าหลัก StatefulWidget</a></li>
+    <li><a href="#result">ResultScreen — หน้าแสดงผลคะแนน</a></li>
+    <li><a href="#summary">สรุปสถาปัตยกรรมทั้งหมด</a></li>
+  </ol>
+</div>
+</section>
+
+
+<section id="main">
+<h2><span class="badge">ENTRY</span> main.dart — จุดเริ่มต้นของแอป</h2>
+<div class="intro-box">
+  <p>เหมือน Python ที่มี <code>if __name__ == '__main__':</code> ใน Dart จุดเริ่มต้นคือฟังก์ชัน <code>void main()</code></p>
+</div>
+
+<div class="code-wrap">
+<div class="code-hdr"><span>main.dart</span><span class="fn">void main() — จุดเริ่มต้น</span></div>
+<pre><code><span class="ln"><span class="lnum"> 1</span><span class="kw">import</span> <span class="st">'package:flutter/material.dart'</span>;   <span class="cm">// เหมือน import ใน Python</span></span>
+<span class="ln"><span class="lnum"> 5</span><span class="kw">void</span> <span class="fn">main</span>() {</span>
+<span class="ln"><span class="lnum"> 6</span>  WidgetsFlutterBinding.<span class="fn">ensureInitialized</span>();  <span class="cm">// เตรียม Flutter engine ก่อน runApp</span></span>
+<span class="ln"><span class="lnum"> 7</span>  <span class="fn">runApp</span>(<span class="kw">const</span> <span class="dec">EggYolkApp</span>());               <span class="cm">// สั่งรันแอป</span></span>
+<span class="ln"><span class="lnum"> 8</span>}</span>
+</code></pre>
+</div>
+
+<div class="code-wrap">
+<div class="code-hdr"><span>main.dart</span><span class="fn">EggYolkApp — Root Widget (StatelessWidget)</span></div>
+<pre><code><span class="ln"><span class="lnum">10</span><span class="kw">class</span> <span class="dec">EggYolkApp</span> <span class="kw">extends</span> <span class="dec">StatelessWidget</span> {  <span class="cm">// Widget ที่ไม่มี state</span></span>
+<span class="ln"><span class="lnum">11</span>  <span class="kw">const</span> <span class="dec">EggYolkApp</span>({<span class="kw">super</span>.key});           <span class="cm">// constructor</span></span>
+<span class="ln"><span class="lnum">14</span>  <span class="ty">Widget</span> <span class="fn">build</span>(<span class="ty">BuildContext</span> context) {</span>
+<span class="ln"><span class="lnum">15</span>    <span class="kw">return</span> <span class="dec">MaterialApp</span>(</span>
+<span class="ln"><span class="lnum">16</span>      title: <span class="st">'Egg Yolk Color Predictor'</span>,</span>
+<span class="ln"><span class="lnum">20</span>      brightness: Brightness.dark,           <span class="cm">// Dark Mode</span></span>
+<span class="ln"><span class="lnum">21</span>      scaffoldBackgroundColor: <span class="kw">const</span> <span class="dec">Color</span>(<span class="num">0xFF141421</span>),  <span class="cm">// สีพื้นหลัง HEX</span></span>
+<span class="ln"><span class="lnum">27</span>      textTheme: GoogleFonts.<span class="fn">kanitTextTheme</span>(...), <span class="cm">// ฟอนต์ภาษาไทย Kanit</span></span>
+<span class="ln"><span class="lnum">31</span>      home: <span class="kw">const</span> <span class="dec">SplashScreen</span>(),            <span class="cm">// หน้าแรกของแอป</span></span>
+<span class="ln"><span class="lnum">32</span>    );</span>
+<span class="ln"><span class="lnum">33</span>  }</span>
+<span class="ln"><span class="lnum">34</span>}</span>
+</code></pre>
+</div>
+<span class="ann dart"><strong>StatelessWidget</strong> คือ Widget ที่ "ไม่มีความจำ" — วาดหน้าจอแล้วไม่เปลี่ยน เหมือน Python function ที่ไม่เก็บ state</span>
+<span class="ann"><strong>MaterialApp</strong> คือ "กล่องใหญ่" ที่หุ้มทั้งแอป กำหนด theme, routing, font รวมศูนย์</span>
+
+<div class="flow-wrap">
+  <p style="color:var(--muted);font-size:.82rem;margin-bottom:10px">📱 การไหลของ Navigation ในแอป:</p>
+  <div class="flow">
+    <div class="fb done">SplashScreen<br><small>โหลดโมเดล</small></div>
+    <div class="fa">→</div>
+    <div class="fb done">HomeScreen<br><small>เลือกภาพ</small></div>
+    <div class="fa">→</div>
+    <div class="fb done">CropScreen<br><small>ตัดไข่แดง</small></div>
+    <div class="fa">→</div>
+    <div class="fb active">ResultScreen<br><small>แสดงผล</small></div>
+    <div class="fa">→</div>
+    <div class="fb blue">DetailScreen<br><small>รายละเอียด</small></div>
+  </div>
+</div>
+</section>
+
+
+<section id="model">
+<h2><span class="badge model">MODEL</span> prediction_result.dart — โครงสร้างข้อมูล</h2>
+<div class="intro-box">
+  <p>ใน Python เราอาจใช้ <code>dict</code> หรือ <code>dataclass</code> เก็บข้อมูล ใน Dart เราสร้าง <strong>Class</strong> ทำให้โค้ดปลอดภัย IDE autocomplete ได้ และป้องกัน typo</p>
+</div>
+
+<div class="py-dart">
+  <div class="py-box python">
+    <div class="lang-hdr">🐍 Python (dataclass)</div>
+    <pre><code><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="an">@dataclass</span>
+<span class="kw">class</span> <span class="dec">RGBColor</span>:
+    r: <span class="bi">float</span>
+    g: <span class="bi">float</span>
+    b: <span class="bi">float</span>
+
+rgb = RGBColor(r=<span class="num">220.5</span>, g=<span class="num">131.2</span>, b=<span class="num">28.7</span>)
+<span class="bi">print</span>(rgb.r)  <span class="cm"># 220.5</span></code></pre>
+  </div>
+  <div class="py-box dart">
+    <div class="lang-hdr">🎯 Dart (class)</div>
+    <pre><code><span class="kw">class</span> <span class="dec">RGBColor</span> {
+  <span class="kw">final</span> <span class="ty">double</span> r;
+  <span class="kw">final</span> <span class="ty">double</span> g;
+  <span class="kw">final</span> <span class="ty">double</span> b;
+
+  <span class="dec">RGBColor</span>({<span class="kw">required</span> this.r,
+             <span class="kw">required</span> this.g,
+             <span class="kw">required</span> this.b});
+}
+
+<span class="kw">var</span> rgb = RGBColor(r:<span class="num">220.5</span>, g:<span class="num">131.2</span>, b:<span class="num">28.7</span>);
+print(rgb.r);  <span class="cm">// 220.5</span></code></pre>
+  </div>
+</div>
+
+<h3>📌 factory constructor — แปลง JSON → Object</h3>
+<div class="code-wrap">
+<div class="code-hdr"><span>prediction_result.dart</span><span class="fn">RGBColor.fromJson()</span></div>
+<pre><code><span class="ln"><span class="lnum"> 8</span>  <span class="kw">factory</span> <span class="dec">RGBColor</span>.<span class="fn">fromJson</span>(<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt; json) {</span>
+<span class="ln"><span class="lnum"> 9</span>    <span class="kw">return</span> <span class="dec">RGBColor</span>(</span>
+<span class="ln"><span class="lnum">10</span>      r: (json[<span class="st">'r'</span>] <span class="kw">as</span> <span class="ty">num</span>).<span class="fn">toDouble</span>(),   <span class="cm">// แปลง JSON number → double</span></span>
+<span class="ln"><span class="lnum">11</span>      g: (json[<span class="st">'g'</span>] <span class="kw">as</span> <span class="ty">num</span>).<span class="fn">toDouble</span>(),</span>
+<span class="ln"><span class="lnum">12</span>      b: (json[<span class="st">'b'</span>] <span class="kw">as</span> <span class="ty">num</span>).<span class="fn">toDouble</span>(),</span>
+<span class="ln"><span class="lnum">13</span>    );</span>
+<span class="ln"><span class="lnum">14</span>  }</span>
+</code></pre>
+</div>
+<span class="ann"><code>factory</code> constructor คือ Named constructor พิเศษ เหมือน <code>@classmethod</code> ใน Python — ใช้ตอนสร้าง object จาก JSON ที่รับมาจาก API Backend</span>
+
+<table>
+  <tr><th>Class</th><th>Fields</th><th>ใช้ทำอะไร</th></tr>
+  <tr><td><code>RGBColor</code></td><td>r, g, b (double)</td><td>เก็บค่าสีเฉลี่ย RGB จากวงกลม 42%</td></tr>
+  <tr><td><code>CIELABColor</code></td><td>l, a, b, chroma, hueAngle</td><td>เก็บค่าสีใน CIELAB + Polar coordinates</td></tr>
+  <tr><td><code>PredictionResult</code></td><td>predictedScore (int), rawScore (double), rgb, cielab</td><td>ผลลัพธ์สมบูรณ์จาก SVR — ส่งต่อระหว่าง Screens</td></tr>
+</table>
+</section>
+
+
+<section id="local">
+<h2><span class="badge service">SERVICE</span> local_predict_service.dart — Engine AI On-Device <span class="tag async">async</span><span class="tag static">static</span></h2>
+<div class="intro-box">
+  <p>นี่คือ<strong>หัวใจหลักของแอป</strong> — คำนวณสมการ SVR RBF ทั้งหมดบนเครื่องโทรศัพท์โดยตรง ไม่ส่งภาพออกนอก ทำงานได้แบบ Offline 100%</p>
+</div>
+
+<div class="flow-wrap">
+  <div class="flow">
+    <div class="fb done">📁 model_weights.json</div>
+    <div class="fa">→</div>
+    <div class="fb done">loadModel()</div>
+    <div class="fa">→</div>
+    <div class="fb done">extractMeanRgb()<br><small>42% Circular</small></div>
+    <div class="fa">→</div>
+    <div class="fb done">rgbToCielab()<br><small>D65</small></div>
+    <div class="fa">→</div>
+    <div class="fb done">Standardize<br><small>scaler</small></div>
+    <div class="fa">→</div>
+    <div class="fb active">SVR Kernel<br><small>556 vectors</small></div>
+    <div class="fa">→</div>
+    <div class="fb blue">Score 1–15</div>
+  </div>
+</div>
+
+<h3>🔒 Static Fields — Singleton Pattern</h3>
+<div class="code-wrap">
+<div class="code-hdr"><span>local_predict_service.dart</span><span class="fn">Class-level static variables</span></div>
+<pre><code><span class="ln"><span class="lnum"> 9</span><span class="kw">class</span> <span class="dec">LocalPredictService</span> {</span>
+<span class="ln"><span class="lnum">10</span>  <span class="kw">static</span> <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt;? _weightsData;    <span class="cm">// ? = nullable</span></span>
+<span class="ln"><span class="lnum">11</span>  <span class="kw">static</span> <span class="ty">List</span>&lt;<span class="ty">double</span>&gt;? _scalerMean;           <span class="cm">// ค่าเฉลี่ย 6 features</span></span>
+<span class="ln"><span class="lnum">12</span>  <span class="kw">static</span> <span class="ty">List</span>&lt;<span class="ty">double</span>&gt;? _scalerScale;          <span class="cm">// ค่า std ของ 6 features</span></span>
+<span class="ln"><span class="lnum">13</span>  <span class="kw">static</span> <span class="ty">double</span>? _gamma;                       <span class="cm">// γ ค่า RBF kernel</span></span>
+<span class="ln"><span class="lnum">14</span>  <span class="kw">static</span> <span class="ty">double</span>? _intercept;                   <span class="cm">// bias (b)</span></span>
+<span class="ln"><span class="lnum">15</span>  <span class="kw">static</span> <span class="ty">List</span>&lt;<span class="ty">double</span>&gt;? _dualCoef;             <span class="cm">// alpha (556 ค่า)</span></span>
+<span class="ln"><span class="lnum">16</span>  <span class="kw">static</span> <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">double</span>&gt;&gt;? _supportVectors; <span class="cm">// 556 x 6 จุดอ้างอิง</span></span>
+<span class="ln"><span class="lnum">17</span>  <span class="kw">static</span> <span class="ty">bool</span> _isLoaded = <span class="kw">false</span>;</span>
+</code></pre>
+</div>
+<span class="ann dart"><code>static</code> ใน Dart เหมือน class variable ใน Python — ไม่ต้อง new object ก็เข้าถึงได้ แชร์ค่าเดียวกันทุก instance (Singleton Pattern)</span>
+<span class="ann warn"><code>Type?</code> คือ Nullable — ในDart ถ้าไม่ใส่ <code>?</code> หมายความว่าต้องไม่เป็น null เด็ดขาด ถ้าฝืนจะ compile error ทันที</span>
+
+<h3>📦 loadModel() — โหลด JSON ครั้งเดียว</h3>
+<div class="code-wrap">
+<div class="code-hdr"><span>local_predict_service.dart</span><span class="fn">static Future&lt;void&gt; loadModel()</span></div>
+<pre><code><span class="ln"><span class="lnum">20</span>  <span class="kw">static</span> <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">loadModel</span>() <span class="kw">async</span> {</span>
+<span class="ln"><span class="lnum">21</span>    <span class="kw">if</span> (_isLoaded) <span class="kw">return</span>;  <span class="cm">// โหลดแล้วข้ามไปเลย (Lazy Singleton)</span></span>
+<span class="ln"><span class="lnum">23</span>    <span class="kw">final</span> jsonString = <span class="kw">await</span> rootBundle.<span class="fn">loadString</span>(<span class="st">'assets/model_weights.json'</span>);</span>
+<span class="ln"><span class="lnum">24</span>    _weightsData = json.<span class="fn">decode</span>(jsonString) <span class="kw">as</span> <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt;;</span>
+<span class="ln"><span class="lnum">26</span>    _scalerMean = (_weightsData![<span class="st">'scaler_mean'</span>] <span class="kw">as</span> <span class="ty">List</span>)</span>
+<span class="ln"><span class="lnum">27</span>        .map((e) =&gt; (e <span class="kw">as</span> <span class="ty">num</span>).<span class="fn">toDouble</span>())   <span class="cm">// เหมือน [float(e) for e in list]</span></span>
+<span class="ln"><span class="lnum">28</span>        .<span class="fn">toList</span>();</span>
+<span class="ln"><span class="lnum">38</span>    _supportVectors = (_weightsData![<span class="st">'support_vectors'</span>] <span class="kw">as</span> <span class="ty">List</span>)</span>
+<span class="ln"><span class="lnum">39</span>        .map((row) =&gt; (row <span class="kw">as</span> <span class="ty">List</span>).map((e) =&gt; (e <span class="kw">as</span> <span class="ty">num</span>).<span class="fn">toDouble</span>()).<span class="fn">toList</span>())</span>
+<span class="ln"><span class="lnum">40</span>        .<span class="fn">toList</span>();  <span class="cm">// แปลง List&lt;List&lt;dynamic&gt;&gt; → List&lt;List&lt;double&gt;&gt;</span></span>
+<span class="ln"><span class="lnum">42</span>    _isLoaded = <span class="kw">true</span>;</span>
+<span class="ln"><span class="lnum">43</span>  }</span>
+</code></pre>
+</div>
+
+<div class="py-dart">
+  <div class="py-box python">
+    <div class="lang-hdr">🐍 Python เทียบเท่า</div>
+    <pre><code><span class="kw">import</span> json
+
+<span class="kw">with</span> <span class="bi">open</span>(<span class="st">'model_weights.json'</span>) <span class="kw">as</span> f:
+    data = json.load(f)
+
+scaler_mean = [<span class="bi">float</span>(e) <span class="kw">for</span> e <span class="kw">in</span> data[<span class="st">'scaler_mean'</span>]]
+support_vectors = [
+    [<span class="bi">float</span>(x) <span class="kw">for</span> x <span class="kw">in</span> row]
+    <span class="kw">for</span> row <span class="kw">in</span> data[<span class="st">'support_vectors'</span>]
+]</code></pre>
+  </div>
+  <div class="py-box dart">
+    <div class="lang-hdr">🎯 Dart เทียบเท่า</div>
+    <pre><code><span class="cm">// Dart ต้อง await เพราะ I/O เป็น async</span>
+<span class="kw">final</span> jsonStr = <span class="kw">await</span> rootBundle
+    .<span class="fn">loadString</span>(<span class="st">'assets/model_weights.json'</span>);
+<span class="kw">final</span> data = json.<span class="fn">decode</span>(jsonStr);
+
+<span class="cm">// .map().toList() เหมือน list comprehension</span>
+<span class="kw">final</span> scalerMean = (data[<span class="st">'scaler_mean'</span>] <span class="kw">as</span> List)
+    .map((e) => (e <span class="kw">as</span> num).toDouble())
+    .toList();</code></pre>
+  </div>
+</div>
+
+<h3>🔬 _srgbToLinear() — ถอด Gamma</h3>
+<div class="code-wrap">
+<div class="code-hdr"><span>local_predict_service.dart</span><span class="fn">static double _srgbToLinear(double c)</span></div>
+<pre><code><span class="ln"><span class="lnum">46</span>  <span class="kw">static</span> <span class="ty">double</span> <span class="fn">_srgbToLinear</span>(<span class="ty">double</span> c) {</span>
+<span class="ln"><span class="lnum">47</span>    <span class="kw">final</span> v = c / <span class="num">255.0</span>;</span>
+<span class="ln"><span class="lnum">48</span>    <span class="kw">return</span> (v &lt;= <span class="num">0.04045</span>)</span>
+<span class="ln"><span class="lnum">48</span>        ? (v / <span class="num">12.92</span>)                           <span class="cm">// แสงน้อย: linear</span></span>
+<span class="ln"><span class="lnum">48</span>        : math.<span class="fn">pow</span>((v + <span class="num">0.055</span>) / <span class="num">1.055</span>, <span class="num">2.4</span>).<span class="fn">toDouble</span>();  <span class="cm">// แสงมาก: gamma</span></span>
+<span class="ln"><span class="lnum">49</span>  }</span>
+</code></pre>
+</div>
+<span class="ann math"><strong>sRGB Gamma Correction:</strong> หน้าจอ encode สีแบบ non-linear (Gamma ~2.2) แต่การคำนวณ CIELAB ต้องการค่า Linear — ฟังก์ชันนี้ถอด gamma ออก</span>
+<span class="ann">Dart ternary <code>cond ? a : b</code> เหมือน Python <code>a if cond else b</code> · <code>math.pow(...).toDouble()</code> เพราะ pow คืน <code>num</code> ไม่ใช่ <code>double</code></span>
+
+<h3>🌈 rgbToCielab() — แปลงสี RGB → CIELAB</h3>
+<div class="code-wrap">
+<div class="code-hdr"><span>local_predict_service.dart</span><span class="fn">static Map&lt;String,double&gt; rgbToCielab()</span></div>
+<pre><code><span class="ln"><span class="lnum">52</span>  <span class="kw">static</span> <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">double</span>&gt; <span class="fn">rgbToCielab</span>(<span class="ty">double</span> r, <span class="ty">double</span> g, <span class="ty">double</span> b) {</span>
+<span class="ln"><span class="lnum">53</span>    <span class="kw">final</span> rLin = <span class="fn">_srgbToLinear</span>(r);</span>
+<span class="ln"><span class="lnum">58</span>    <span class="cm">// RGB → XYZ (D65 illuminant) แล้วหารด้วย White Point</span></span>
+<span class="ln"><span class="lnum">58</span>    <span class="kw">final</span> x = (<span class="num">0.4124564</span>*rLin + <span class="num">0.3575761</span>*gLin + <span class="num">0.1804375</span>*bLin) / <span class="num">0.95047</span>;</span>
+<span class="ln"><span class="lnum">59</span>    <span class="kw">final</span> y = (<span class="num">0.2126729</span>*rLin + <span class="num">0.7151522</span>*gLin + <span class="num">0.0721750</span>*bLin) / <span class="num">1.00000</span>;</span>
+<span class="ln"><span class="lnum">60</span>    <span class="kw">final</span> z = (<span class="num">0.0193339</span>*rLin + <span class="num">0.1191920</span>*gLin + <span class="num">0.9503041</span>*bLin) / <span class="num">1.08883</span>;</span>
+<span class="ln"><span class="lnum">65</span>    <span class="ty">double</span> <span class="fn">f</span>(<span class="ty">double</span> t) {  <span class="cm">// Nested function (เหมือน Python)</span></span>
+<span class="ln"><span class="lnum">66</span>      <span class="kw">return</span> (t &gt; deltaCubed)</span>
+<span class="ln"><span class="lnum">66</span>          ? math.<span class="fn">pow</span>(t, <span class="num">1.0</span>/<span class="num">3.0</span>).<span class="fn">toDouble</span>()  <span class="cm">// cube root</span></span>
+<span class="ln"><span class="lnum">66</span>          : (t / (<span class="num">3.0</span> * delta * delta)) + (<span class="num">4.0</span>/<span class="num">29.0</span>);</span>
+<span class="ln"><span class="lnum">67</span>    }</span>
+<span class="ln"><span class="lnum">73</span>    <span class="kw">final</span> l    = <span class="num">116.0</span> * fy - <span class="num">16.0</span>;       <span class="cm">// L* = ความสว่าง</span></span>
+<span class="ln"><span class="lnum">74</span>    <span class="kw">final</span> a    = <span class="num">500.0</span> * (fx - fy);        <span class="cm">// a* = แดง-เขียว</span></span>
+<span class="ln"><span class="lnum">75</span>    <span class="kw">final</span> bLab = <span class="num">200.0</span> * (fy - fz);        <span class="cm">// b* = เหลือง-น้ำเงิน</span></span>
+<span class="ln"><span class="lnum">77</span>    <span class="kw">return</span> {<span class="st">'l'</span>: l, <span class="st">'a'</span>: a, <span class="st">'b'</span>: bLab};</span>
+<span class="ln"><span class="lnum">81</span>  }</span>
+</code></pre>
+</div>
+<span class="ann math">ฟังก์ชัน <code>f()</code> ถูกนิยามภายในฟังก์ชัน <code>rgbToCielab()</code> — Dart รองรับ <strong>Nested Function</strong> เหมือน Python เลย!</span>
+
+<h3>🖼️ extractMeanRgb() — สกัด RGB จากวงกลม 42%</h3>
+<div class="code-wrap">
+<div class="code-hdr"><span>local_predict_service.dart</span><span class="fn">ดึงข้อมูล RGBA pixels จากภาพ</span></div>
+<pre><code><span class="ln"><span class="lnum"> 86</span>    <span class="kw">final</span> bytes = <span class="kw">await</span> imageFile.<span class="fn">readAsBytes</span>();   <span class="cm">// อ่านไฟล์เป็น binary</span></span>
+<span class="ln"><span class="lnum"> 87</span>    <span class="kw">final</span> codec = <span class="kw">await</span> ui.<span class="fn">instantiateImageCodec</span>(bytes);</span>
+<span class="ln"><span class="lnum"> 88</span>    <span class="kw">final</span> image = (<span class="kw">await</span> codec.<span class="fn">getNextFrame</span>()).image;</span>
+<span class="ln"><span class="lnum"> 93</span>    <span class="kw">final</span> byteData = <span class="kw">await</span> image.<span class="fn">toByteData</span>(format: ui.ImageByteFormat.rawRgba);</span>
+<span class="ln"><span class="lnum"> 94</span>    image.<span class="fn">dispose</span>();  <span class="cm">// คืน GPU memory ทันที (สำคัญมาก!)</span></span>
+<span class="ln"><span class="lnum">100</span>    <span class="kw">final</span> buffer = byteData!.buffer.<span class="fn">asUint8List</span>();  <span class="cm">// [R,G,B,A, R,G,B,A...]</span></span>
+<span class="ln"><span class="lnum">101</span>    <span class="kw">final</span> cx = w ~/ <span class="num">2</span>;   <span class="cm">// ~/ คือ integer division เหมือน // ใน Python</span></span>
+<span class="ln"><span class="lnum">103</span>    <span class="kw">final</span> radius = (math.<span class="fn">min</span>(w, h) * <span class="num">0.42</span>).<span class="fn">round</span>();  <span class="cm">// 42% radius</span></span>
+<span class="ln"><span class="lnum">116</span>        <span class="kw">if</span> (dx*dx + dySq &lt;= radiusSq) {    <span class="cm">// (x-cx)^2 + (y-cy)^2 <= r^2</span></span>
+<span class="ln"><span class="lnum">117</span>          <span class="kw">final</span> idx = (y*w + x) * <span class="num">4</span>;        <span class="cm">// RGBA: 4 bytes/pixel</span></span>
+<span class="ln"><span class="lnum">118</span>          sumR += buffer[idx];               <span class="cm">// R</span></span>
+<span class="ln"><span class="lnum">119</span>          sumG += buffer[idx + <span class="num">1</span>];          <span class="cm">// G</span></span>
+<span class="ln"><span class="lnum">120</span>          sumB += buffer[idx + <span class="num">2</span>];          <span class="cm">// B (idx+3 คือ Alpha ไม่ใช้)</span></span>
+<span class="ln"><span class="lnum">121</span>          count++;</span>
+</code></pre>
+</div>
+<span class="ann warn"><code>image.dispose()</code> สำคัญมาก! <code>ui.Image</code> เป็น native GPU resource ต้องปล่อยทันทีหลังใช้งาน ไม่งั้นโทรศัพท์กินหน่วยความจำเพิ่มเรื่อยๆ (Memory Leak)</span>
+
+<h3>🏆 predictImage() — ประกอบร่างสูตร SVR</h3>
+<div class="code-wrap">
+<div class="code-hdr"><span>local_predict_service.dart</span><span class="fn">SVR RBF Kernel Evaluation</span></div>
+<pre><code><span class="ln"><span class="lnum">163</span>    <span class="kw">final</span> normFeatures = <span class="ty">List</span>&lt;<span class="ty">double</span>&gt;.<span class="fn">generate</span>(<span class="num">6</span>, (i) {</span>
+<span class="ln"><span class="lnum">164</span>      <span class="kw">return</span> (rawFeatures[i] - _scalerMean![i]) / _scalerScale![i];</span>
+<span class="ln"><span class="lnum">165</span>    });  <span class="cm">// Standardize: (x - mean) / std เหมือน StandardScaler ของ Python</span></span>
+<span class="ln"><span class="lnum">167</span>    <span class="cm">// f(x) = b + sum(alpha_i * exp(-gamma * ||x - sv_i||^2))</span></span>
+<span class="ln"><span class="lnum">168</span>    <span class="ty">double</span> rawScore = _intercept!;           <span class="cm">// เริ่มที่ intercept (b)</span></span>
+<span class="ln"><span class="lnum">172</span>    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="num">0</span>; i &lt; numSVs; i++) {      <span class="cm">// วน 556 Support Vectors</span></span>
+<span class="ln"><span class="lnum">174</span>      <span class="ty">double</span> distSq = <span class="num">0.0</span>;</span>
+<span class="ln"><span class="lnum">175</span>      <span class="kw">for</span> (<span class="ty">int</span> j = <span class="num">0</span>; j &lt; <span class="num">6</span>; j++) {</span>
+<span class="ln"><span class="lnum">176</span>        <span class="kw">final</span> diff = normFeatures[j] - sv[j];</span>
+<span class="ln"><span class="lnum">177</span>        distSq += diff * diff;               <span class="cm">// ||x - sv_i||^2</span></span>
+<span class="ln"><span class="lnum">178</span>      }</span>
+<span class="ln"><span class="lnum">179</span>      <span class="kw">final</span> rbf = math.<span class="fn">exp</span>(-gamma * distSq); <span class="cm">// K = exp(-γd²)</span></span>
+<span class="ln"><span class="lnum">180</span>      rawScore += _dualCoef![i] * rbf;        <span class="cm">// += α_i * K</span></span>
+<span class="ln"><span class="lnum">181</span>    }</span>
+<span class="ln"><span class="lnum">184</span>    <span class="kw">final</span> predictedScore = rawScore.<span class="fn">round</span>().<span class="fn">clamp</span>(<span class="num">1</span>, <span class="num">15</span>);</span>
+</code></pre>
+</div>
+<span class="ann math"><strong>SVR RBF Formula:</strong> f(x) = b + Σᵢ αᵢ · exp(-γ · ||x - sᵢ||²) · x = feature standardized, sᵢ = support vector i, αᵢ = dual coef, γ = gamma</span>
+<span class="ann"><code>rawScore.round().clamp(1, 15)</code> เทียบ Python: <code>int(round(max(1.0, min(15.0, raw_score))))</code></span>
+</section>
+
+
+<section id="autocrop">
+<h2><span class="badge service">SERVICE</span> auto_crop_service.dart — ตรวจจับไข่แดงอัตโนมัติ (BFS)</h2>
+<div class="intro-box">
+  <p>ทำงานเหมือน <code>batch_auto_crop.py</code> แต่เขียนด้วย Dart ล้วนๆ ใช้ Algorithm <strong>BFS Flood-Fill</strong> เพื่อหา Connected Components แทน scikit-image</p>
+</div>
+
+<div class="code-wrap">
+<div class="code-hdr"><span>auto_crop_service.dart</span><span class="fn">ขั้นที่ 1: Downsample 240px + HSV Mask</span></div>
+<pre><code><span class="ln"><span class="lnum">30</span>  <span class="kw">const</span> targetDim = <span class="num">240</span>;   <span class="cm">// resize เป็น 240px ก่อน (เร็วกว่า 100x)</span></span>
+<span class="ln"><span class="lnum">31</span>  <span class="kw">final</span> codec = <span class="kw">await</span> ui.<span class="fn">instantiateImageCodec</span>(bytes, targetWidth: targetDim);</span>
+<span class="ln"><span class="lnum">63</span>      <span class="kw">if</span> (maxVal == r) hue = <span class="num">60.0</span> * (((g-b) / delta) % <span class="num">6.0</span>);</span>
+<span class="ln"><span class="lnum">66</span>      <span class="kw">else if</span> (maxVal == g) hue = <span class="num">60.0</span> * (((b-r) / delta) + <span class="num">2.0</span>);</span>
+<span class="ln"><span class="lnum">68</span>      <span class="kw">else</span> hue = <span class="num">60.0</span> * (((r-g) / delta) + <span class="num">4.0</span>);  <span class="cm">// คำนวณ Hue จาก RGB</span></span>
+<span class="ln"><span class="lnum">78</span>      <span class="kw">if</span> (hue &gt;= <span class="num">5.0</span> &amp;&amp; hue &lt;= <span class="num">55.0</span> &amp;&amp; sat &gt;= <span class="num">0.25</span> &amp;&amp; val &gt;= <span class="num">0.20</span>)</span>
+<span class="ln"><span class="lnum">79</span>        mask[i] = <span class="num">1</span>;  <span class="cm">// pixel นี้เป็นสีไข่แดง</span></span>
+</code></pre>
+</div>
+<span class="ann"><strong>ทำไม Downsample เป็น 240px?</strong> ลดจำนวน pixel จาก ~8 ล้าน (ภาพ 4K) เหลือ ~57,600 — เร็วขึ้น 100 เท่า แต่ยังตรวจจับสีได้แม่นยำ</span>
+
+<div class="code-wrap">
+<div class="code-hdr"><span>auto_crop_service.dart</span><span class="fn">ขั้นที่ 3: BFS Flood-Fill หา Largest Blob</span></div>
+<pre><code><span class="ln"><span class="lnum"> 89</span>  <span class="kw">final</span> queue = &lt;<span class="ty">int</span>&gt;[];  <span class="cm">// queue สำหรับ BFS</span></span>
+<span class="ln"><span class="lnum"> 94</span>      <span class="kw">if</span> (mask[idx] == <span class="num">1</span> &amp;&amp; visited[idx] == <span class="num">0</span>) {  <span class="cm">// pixel ใหม่ที่ยังไม่ visit</span></span>
+<span class="ln"><span class="lnum">100</span>        queue.<span class="fn">add</span>(idx); visited[idx] = <span class="num">1</span>;</span>
+<span class="ln"><span class="lnum">103</span>        <span class="kw">while</span> (queue.<span class="fn">isNotEmpty</span>) {          <span class="cm">// BFS loop</span></span>
+<span class="ln"><span class="lnum">104</span>          <span class="kw">final</span> curr = queue.<span class="fn">removeLast</span>();  <span class="cm">// pop จาก queue</span></span>
+<span class="ln"><span class="lnum">116</span>          <span class="kw">const</span> dx = [<span class="num">1</span>, -<span class="num">1</span>, <span class="num">0</span>,  <span class="num">0</span>];        <span class="cm">// ทิศ: ขวา ซ้าย ลง บน</span></span>
+<span class="ln"><span class="lnum">117</span>          <span class="kw">const</span> dy = [<span class="num">0</span>,  <span class="num">0</span>, <span class="num">1</span>, -<span class="num">1</span>];</span>
+<span class="ln"><span class="lnum">124</span>            <span class="kw">if</span> (mask[nidx] == <span class="num">1</span> &amp;&amp; visited[nidx] == <span class="num">0</span>) queue.<span class="fn">add</span>(nidx);</span>
+<span class="ln"><span class="lnum">133</span>        <span class="kw">if</span> (area &gt; largestArea) { largestArea = area; ... }  <span class="cm">// เก็บ blob ที่ใหญ่สุด</span></span>
+</code></pre>
+</div>
+<span class="ann"><strong>BFS (Breadth-First Search)</strong> เป็น Algorithm สำหรับ Connected Component — "เดิน" จาก pixel ไข่แดงหนึ่ง ไปยัง pixel ที่ติดกันจนครบทั้งก้อน วัดพื้นที่ → เลือกก้อนใหญ่สุด = ไข่แดง เหมือน <code>skimage.measure.label()</code> ใน Python แต่เขียนเองด้วย Dart!</span>
+</section>
+
+
+<section id="colorext">
+<h2><span class="badge service">SERVICE</span> color_extractor.dart — สกัดสีทางเลือก (ใช้ใน Unit Test)</h2>
+<div class="intro-box">
+  <p>ทำงานเหมือน <code>LocalPredictService</code> แต่รับ <code>img.Image</code> (จาก package <code>image</code>) แทน <code>File</code> — ถูกใช้ใน Unit Tests เพื่อทดสอบ CIELAB conversion แบบ offline</p>
+</div>
+
+<div class="code-wrap">
+<div class="code-hdr"><span>color_extractor.dart</span><span class="fn">static const — D65 White Point</span></div>
+<pre><code><span class="ln"><span class="lnum"> 8</span>  <span class="kw">static const double</span> xn = <span class="num">0.95047</span>;  <span class="cm">// X reference white (D65)</span></span>
+<span class="ln"><span class="lnum"> 9</span>  <span class="kw">static const double</span> yn = <span class="num">1.00000</span>;</span>
+<span class="ln"><span class="lnum">10</span>  <span class="kw">static const double</span> zn = <span class="num">1.08883</span>;</span>
+</code></pre>
+</div>
+<span class="ann"><code>static const</code> คือ Compile-time Constant — เหมือน <code>XN = 0.95047</code> ค่าคงที่ใน Python (UPPER_CASE convention)</span>
+
+<table>
+  <tr><th>ด้าน</th><th>LocalPredictService</th><th>ColorExtractor</th></tr>
+  <tr><td>รับ Input</td><td><code>File</code> (ไฟล์จริง)</td><td><code>img.Image</code> (object ใน memory)</td></tr>
+  <tr><td>API ดึง pixel</td><td><code>ui.Image</code> (native GPU)</td><td><code>package:image</code> (pure Dart)</td></tr>
+  <tr><td>ใช้ใน</td><td>Production ทำนายจริง</td><td>Unit Tests เท่านั้น</td></tr>
+  <tr><td>async?</td><td>ใช่ (await ไฟล์)</td><td>ไม่ (sync)</td></tr>
+</table>
+</section>
+
+
+<section id="home">
+<h2><span class="badge screen">SCREEN</span> home_screen.dart — หน้าหลัก <span class="tag ui">StatefulWidget</span></h2>
+<div class="intro-box">
+  <p>หน้านี้เป็น <strong>StatefulWidget</strong> — มีความจำ (state) เก็บ loading state, toggle mode ระหว่าง On-Device / API</p>
+</div>
+
+<h3>⚡ StatefulWidget — Widget ที่มี State</h3>
+<div class="py-dart">
+  <div class="py-box python">
+    <div class="lang-hdr">🐍 Python เปรียบเทียบ</div>
+    <pre><code><span class="kw">class</span> <span class="dec">HomeScreen</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.is_loading = <span class="kw">False</span>
+        self.use_local = <span class="kw">True</span>
+
+    <span class="kw">def</span> <span class="fn">set_loading</span>(self, val):
+        self.is_loading = val
+        self.<span class="fn">rebuild_ui</span>()  <span class="cm"># วาด UI ใหม่</span></code></pre>
+  </div>
+  <div class="py-box dart">
+    <div class="lang-hdr">🎯 Dart (StatefulWidget)</div>
+    <pre><code><span class="kw">class</span> <span class="dec">HomeScreen</span> <span class="kw">extends</span> <span class="dec">StatefulWidget</span> { ... }
+
+<span class="kw">class</span> <span class="dec">_HomeScreenState</span> <span class="kw">extends</span> <span class="dec">State</span>&lt;<span class="dec">HomeScreen</span>&gt; {
+  <span class="ty">bool</span> _isLoading = <span class="kw">false</span>;
+  <span class="ty">bool</span> _useLocalModel = <span class="kw">true</span>;
+
+  <span class="kw">void</span> <span class="fn">setLoading</span>(<span class="ty">bool</span> val) {
+    <span class="fn">setState</span>(() {   <span class="cm">// บอก Flutter ให้วาด UI ใหม่</span>
+      _isLoading = val;
+    });
+  }
+}</code></pre>
+  </div>
+</div>
+<span class="ann dart"><code>setState(() {...})</code> คือคำสั่ง "บอก Flutter ว่า state เปลี่ยนแล้ว ช่วยวาด UI ใหม่" — ถ้าเปลี่ยนตัวแปรโดยไม่ setState() หน้าจอจะไม่ update!</span>
+
+<h3>📸 _pickAndProcessImage() — Flow หลักทั้งหมด</h3>
+<div class="code-wrap">
+<div class="code-hdr"><span>home_screen.dart</span><span class="fn">Future&lt;void&gt; _pickAndProcessImage()</span></div>
+<pre><code><span class="ln"><span class="lnum">32</span>  <span class="ty">Future</span>&lt;<span class="kw">void</span>&gt; <span class="fn">_pickAndProcessImage</span>(<span class="ty">ImageSource</span> source) <span class="kw">async</span> {</span>
+<span class="ln"><span class="lnum">33</span>    <span class="kw">try</span> {</span>
+<span class="ln"><span class="lnum">34</span>      <span class="kw">final</span> <span class="ty">XFile</span>? pickedFile = <span class="kw">await</span> _picker.<span class="fn">pickImage</span>(</span>
+<span class="ln"><span class="lnum">35</span>        source: source,   <span class="cm">// ImageSource.camera หรือ ImageSource.gallery</span></span>
+<span class="ln"><span class="lnum">36</span>        maxWidth: <span class="num">1920</span>, imageQuality: <span class="num">90</span>,</span>
+<span class="ln"><span class="lnum">38</span>      );</span>
+<span class="ln"><span class="lnum">41</span>      <span class="kw">if</span> (pickedFile == <span class="kw">null</span>) <span class="kw">return</span>;  <span class="cm">// ผู้ใช้กด Cancel</span></span>
+<span class="ln"><span class="lnum">43</span>      <span class="kw">if</span> (!mounted) <span class="kw">return</span>;           <span class="cm">// Widget ถูกทำลายแล้วหรือยัง?</span></span>
+<span class="ln"><span class="lnum">48</span>      <span class="kw">final</span> <span class="ty">File</span>? croppedFile = <span class="kw">await</span> <span class="ty">Navigator</span>.<span class="fn">push</span>&lt;<span class="ty">File</span>?&gt;(</span>
+<span class="ln"><span class="lnum">50</span>        <span class="dec">MaterialPageRoute</span>(builder: (_) =&gt; <span class="dec">CropScreen</span>(imageFile: originalFile)),</span>
+<span class="ln"><span class="lnum">53</span>      );  <span class="cm">// ไปหน้า CropScreen แล้วรับ File? กลับมา</span></span>
+<span class="ln"><span class="lnum">55</span>      <span class="kw">if</span> (croppedFile == <span class="kw">null</span>) <span class="kw">return</span>; <span class="cm">// ผู้ใช้กด Back</span></span>
+<span class="ln"><span class="lnum">58</span>      <span class="fn">setState</span>(() { _isLoading = <span class="kw">true</span>; });  <span class="cm">// แสดง loading spinner</span></span>
+<span class="ln"><span class="lnum">63</span>      <span class="kw">final</span> result = _useLocalModel</span>
+<span class="ln"><span class="lnum">64</span>          ? <span class="kw">await</span> <span class="dec">LocalPredictService</span>.<span class="fn">predictImage</span>(croppedFile)  <span class="cm">// On-Device</span></span>
+<span class="ln"><span class="lnum">65</span>          : <span class="kw">await</span> <span class="dec">ApiService</span>.<span class="fn">predictImage</span>(croppedFile);           <span class="cm">// API Backend</span></span>
+<span class="ln"><span class="lnum">73</span>      <span class="ty">Navigator</span>.<span class="fn">push</span>(context, <span class="dec">MaterialPageRoute</span>(</span>
+<span class="ln"><span class="lnum">76</span>        builder: (_) =&gt; <span class="dec">ResultScreen</span>(imageFile: croppedFile, result: result),</span>
+<span class="ln"><span class="lnum">79</span>      ));</span>
+<span class="ln"><span class="lnum">82</span>    } <span class="kw">catch</span> (e) {  <span class="cm">// try/catch เหมือน Python เลย</span></span>
+<span class="ln"><span class="lnum">88</span>      <span class="dec">ScaffoldMessenger</span>.<span class="fn">of</span>(context).<span class="fn">showSnackBar</span>(...);  <span class="cm">// แสดง Toast message</span></span>
+<span class="ln"><span class="lnum">93</span>    }</span>
+<span class="ln"><span class="lnum">95</span>  }</span>
+</code></pre>
+</div>
+<span class="ann dart"><code>Navigator.push&lt;File?&gt;()</code> เหมือนการ "เปิดหน้าใหม่ซ้อนทับ" และระบุ return type ว่าหน้านั้นจะส่ง <code>File?</code> กลับมาตอนปิด</span>
+<span class="ann warn"><code>if (!mounted) return;</code> ตรวจสอบว่า Widget ยังอยู่บนหน้าจอก่อน setState() — ถ้าผู้ใช้กด back ระหว่างรอ async context จะไม่ valid แล้ว ถ้าไม่เช็คจะ Exception!</span>
+</section>
+
+
+<section id="result">
+<h2><span class="badge screen">SCREEN</span> result_screen.dart — แสดงผลคะแนน</h2>
+<div class="intro-box">
+  <p>หน้านี้รับ <code>PredictionResult</code> มาแสดงผลอย่างเดียว ไม่มีการเปลี่ยน state ใดๆ จึงเป็น <strong>StatelessWidget</strong> (ง่ายกว่า)</p>
+</div>
+
+<div class="code-wrap">
+<div class="code-hdr"><span>result_screen.dart</span><span class="fn">แสดงค่าสีและคะแนน</span></div>
+<pre><code><span class="ln"><span class="lnum">165</span>  <span class="dec">Text</span>(<span class="st">'${result.predictedScore}'</span>,   <span class="cm">// String interpolation เหมือน f-string</span></span>
+<span class="ln"><span class="lnum">166</span>    style: GoogleFonts.<span class="fn">outfit</span>(fontSize: <span class="num">42</span>, fontWeight: FontWeight.bold)),</span>
+<span class="ln"><span class="lnum">174</span>  <span class="dec">Text</span>(<span class="st">'Raw Score: ${result.rawScore.toStringAsFixed(2)}'</span>),  <span class="cm">// เหมือน f'{:.2f}'</span></span>
+<span class="ln"><span class="lnum"> 75</span>  <span class="fn">_buildColorRow</span>(<span class="st">'R'</span>, result.rgb.r.<span class="fn">round</span>()),   <span class="cm">// เรียก helper method</span></span>
+<span class="ln"><span class="lnum"> 93</span>  <span class="fn">_buildColorRow</span>(<span class="st">'L*'</span>, result.cielab.l.<span class="fn">round</span>()),</span>
+</code></pre>
+</div>
+
+<div class="code-wrap">
+<div class="code-hdr"><span>result_screen.dart</span><span class="fn">_buildColorRow() — Helper Widget Method</span></div>
+<pre><code><span class="ln"><span class="lnum">240</span>  <span class="ty">Widget</span> <span class="fn">_buildColorRow</span>(<span class="ty">String</span> label, <span class="ty">int</span> value) {</span>
+<span class="ln"><span class="lnum">241</span>    <span class="kw">return</span> <span class="dec">Padding</span>(</span>
+<span class="ln"><span class="lnum">242</span>      padding: <span class="kw">const</span> <span class="dec">EdgeInsets</span>.<span class="fn">symmetric</span>(vertical: <span class="num">2.0</span>),</span>
+<span class="ln"><span class="lnum">243</span>      child: <span class="dec">Text</span>(<span class="st">'$label : $value'</span>,</span>
+<span class="ln"><span class="lnum">244</span>        style: GoogleFonts.<span class="fn">outfit</span>(fontSize: <span class="num">13</span>, color: Colors.white)),</span>
+<span class="ln"><span class="lnum">250</span>    );</span>
+<span class="ln"><span class="lnum">251</span>  }</span>
+</code></pre>
+</div>
+<span class="ann">ใน Flutter เรามักแยก Widget เล็กๆ ออกมาเป็น method <code>Widget _buildXxx()</code> เพื่อให้ <code>build()</code> ไม่ยาวเกินไป — เหมือน Python refactoring function ออกมา</span>
+</section>
+
+
+<section id="summary">
+<h2>📝 สรุปสถาปัตยกรรม Mobile App</h2>
+
+<div class="flow-wrap">
+  <pre style="background:transparent;padding:0;font-size:.85rem;line-height:1.9;color:var(--text)">lib/
+├── main.dart                          ← จุดเริ่มต้น runApp()
+├── models/
+│   └── prediction_result.dart         ← Data Classes (RGBColor, CIELABColor, PredictionResult)
+├── services/
+│   ├── local_predict_service.dart     ← 🔥 Engine SVR On-Device (หัวใจหลัก)
+│   ├── auto_crop_service.dart         ← ตรวจจับไข่แดง (BFS Blob Detection)
+│   ├── color_extractor.dart           ← สกัดสี (ใช้ใน Unit Test)
+│   └── api_service.dart               ← เรียก FastAPI Backend (ทางเลือก)
+└── screens/
+    ├── splash_screen.dart             ← โหลด model_weights.json
+    ├── home_screen.dart               ← เลือกภาพ + เริ่ม flow
+    ├── crop_screen.dart               ← วงกลม Crop UI
+    ├── result_screen.dart             ← แสดงคะแนน + ค่าสี
+    └── detail_screen.dart             ← รายละเอียด CIELAB เพิ่มเติม</pre>
+</div>
+
+<h3>🔑 Dart Patterns สรุป เทียบ Python</h3>
+<table>
+  <tr><th>Pattern</th><th>Dart</th><th>Python</th></tr>
+  <tr><td>Async function</td><td><code>Future&lt;T&gt; fn() async { await ... }</code></td><td><code>async def fn(): await ...</code></td></tr>
+  <tr><td>Nullable type</td><td><code>String? name;</code></td><td><code>name: Optional[str] = None</code></td></tr>
+  <tr><td>Non-null assert</td><td><code>value!</code></td><td><code>assert value is not None</code></td></tr>
+  <tr><td>List transform</td><td><code>list.map((e) => e*2).toList()</code></td><td><code>[e*2 for e in list]</code></td></tr>
+  <tr><td>Integer division</td><td><code>a ~/ b</code></td><td><code>a // b</code></td></tr>
+  <tr><td>String interpolation</td><td><code>'Score: $score'</code></td><td><code>f'Score: {score}'</code></td></tr>
+  <tr><td>Named parameters</td><td><code>fn(x: 1, y: 2)</code></td><td><code>fn(x=1, y=2)</code></td></tr>
+  <tr><td>Static class variable</td><td><code>static double? _gamma;</code></td><td><code>class Foo: gamma = None</code></td></tr>
+  <tr><td>Ternary</td><td><code>a > b ? a : b</code></td><td><code>a if a > b else b</code></td></tr>
+  <tr><td>Type cast</td><td><code>value as double</code></td><td><code>float(value)</code></td></tr>
+  <tr><td>Update UI</td><td><code>setState(() { ... })</code></td><td>ไม่มี (Python ไม่ใช่ UI framework)</td></tr>
+  <tr><td>Try/Catch</td><td><code>try { } catch (e) { }</code></td><td><code>try: ... except Exception as e:</code></td></tr>
+</table>
+
+<div class="success">
+  <strong>🎯 On-Device AI Flow สรุป (Offline 100%):</strong><br><br>
+  1️⃣ <strong>SplashScreen</strong> โหลด <code>assets/model_weights.json</code> เข้า memory ครั้งเดียว<br>
+  2️⃣ <strong>HomeScreen</strong> รับภาพจาก Camera/Gallery → ส่งไป CropScreen<br>
+  3️⃣ <strong>CropScreen</strong> แสดง UI วงกลม → ผู้ใช้ปรับ → ครอป → บันทึก temp file<br>
+  4️⃣ <strong>LocalPredictService.predictImage()</strong>: สกัด RGB (42% Circular) → CIELAB → Standardize → SVR 556 Vectors<br>
+  5️⃣ <strong>ResultScreen</strong> แสดง Score 1–15 + ค่าสีทั้งหมด<br>
+  ⚡ ทั้งหมดใช้เวลา <strong>&lt; 200ms</strong> บนโทรศัพท์ทั่วไป
+</div>
+</section>
+
+</div>
+
+<footer style="text-align:center;padding:32px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border);">
+  📱 Flutter App Tutorial — สำหรับคนที่รู้ Python · สร้างโดย Antigravity AI
+</footer>
+
+<script>
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('.topnav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if(window.scrollY >= s.offsetTop - 80) current = s.id; });
+  navLinks.forEach(a => {
+    a.classList.remove('active');
+    if(a.getAttribute('href') === '#' + current) a.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

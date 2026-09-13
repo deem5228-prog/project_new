@@ -1,0 +1,6 @@
+Model,Original R2,Auto-Crop R2,Diff R2,Original MAE,Auto-Crop MAE,Original +-1 Acc,Auto-Crop +-1 Acc,Winner
+SVR (RBF Kernel),0.9175,0.9185,+0.0010,0.6453,0.6403,92.9%,92.7%,Auto-Crop (Win)
+Gradient Boosting,0.9063,0.9107,+0.0045,0.6621,0.6554,91.7%,92.3%,Auto-Crop (Win)
+Random Forest,0.9087,0.9078,-0.0009,0.6485,0.6555,92.7%,92.3%,Original (Win)
+Ridge Regression,0.8545,0.8568,+0.0022,0.8835,0.8769,83.2%,82.8%,Auto-Crop (Win)
+Linear Regression,0.8718,0.8738,+0.0020,0.8136,0.8071,85.0%,84.9%,Auto-Crop (Win)

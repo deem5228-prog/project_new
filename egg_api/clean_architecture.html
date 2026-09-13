@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Architecture Diagram - Egg Yolk Project</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #f3f4f6;
+      font-family: 'Kanit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 30px;
+    }
+    .diagram-card {
+      background: #ffffff;
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="diagram-card">
+    <svg width="1000" height="540" viewBox="0 0 1000 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+      
+      <!-- Definitions for marker arrows -->
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#1E293B"/>
+        </marker>
+        <marker id="arrow-blue" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#2563EB"/>
+        </marker>
+        <!-- Card Drop Shadow Filter -->
+        <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="130%">
+          <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.05"/>
+        </filter>
+      </defs>
+
+      <!-- SERVER CONTAINER (Light Grey Box) -->
+      <rect x="500" y="35" width="460" height="470" rx="28" fill="#E2E8F0" opacity="0.75"/>
+      <text x="535" y="78" fill="#0F172A" font-size="24" font-weight="700" letter-spacing="0.5">FastAPI Server</text>
+
+      <!-- 1. USER -->
+      <g transform="translate(35, 235)">
+        <circle cx="28" cy="20" r="16" fill="#0F172A"/>
+        <path d="M 4 52 C 4 36, 15 32, 28 32 C 41 32, 52 36, 52 52 Z" fill="#0F172A"/>
+        <text x="28" y="74" text-anchor="middle" fill="#1E293B" font-size="14" font-weight="600">User</text>
+      </g>
+
+      <!-- USER <-> MOBILE APP ARROWS -->
+      <!-- User -> App -->
+      <path d="M 95 248 L 195 248" stroke="#1E293B" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="145" y="240" text-anchor="middle" fill="#334155" font-size="12" font-weight="500">ใช้งานแอป</text>
+      
+      <!-- App -> User -->
+      <path d="M 195 282 L 95 282" stroke="#1E293B" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="145" y="298" text-anchor="middle" fill="#334155" font-size="12" font-weight="500">แสดงผลหน้าแอป</text>
+
+      <!-- 2. MOBILE APPLICATION (FLUTTER) -->
+      <g transform="translate(205, 190)">
+        <rect x="0" y="0" width="85" height="150" rx="18" fill="#0F172A" filter="url(#card-shadow)"/>
+        <rect x="6" y="10" width="73" height="118" rx="10" fill="#FFFFFF"/>
+        <!-- Egg Yolk Graphic on Phone Screen -->
+        <ellipse cx="42.5" cy="72" rx="24" ry="18" fill="#FEF3C7"/>
+        <circle cx="42.5" cy="68" r="14" fill="#F59E0B"/>
+        <circle cx="38" cy="63" r="4" fill="#FDE68A"/>
+        <text x="42.5" y="172" text-anchor="middle" fill="#0F172A" font-size="14" font-weight="700">Mobile Application</text>
+        <text x="42.5" y="190" text-anchor="middle" fill="#64748B" font-size="12" font-weight="500">(Flutter)</text>
+      </g>
+
+      <!-- APP <-> FASTAPI ARROWS (WITH PLENTY OF ROOM - NO OVERLAP!) -->
+      <!-- App -> FastAPI (Top Arrow) -->
+      <path d="M 300 240 L 515 240" stroke="#1E293B" stroke-width="2.2" marker-end="url(#arrow)"/>
+      <rect x="315" y="216" width="185" height="22" rx="4" fill="#FFFFFF" opacity="0.9"/>
+      <text x="407.5" y="232" text-anchor="middle" fill="#0F172A" font-size="12" font-weight="600">1. ส่งภาพถ่ายที่ครอบแล้ว (Multipart)</text>
+
+      <!-- FastAPI -> App (Bottom Arrow) -->
+      <path d="M 515 290 L 300 290" stroke="#1E293B" stroke-width="2.2" marker-end="url(#arrow)"/>
+      <rect x="310" y="298" width="195" height="22" rx="4" fill="#FFFFFF" opacity="0.9"/>
+      <text x="407.5" y="314" text-anchor="middle" fill="#0F172A" font-size="12" font-weight="600">5. ส่งผลลัพธ์ JSON (Score, RGB, Lab)</text>
+
+
+      <!-- 3. FASTAPI ROUTER BOX -->
+      <g transform="translate(525, 210)">
+        <rect x="0" y="0" width="160" height="115" rx="20" fill="#FFFFFF" filter="url(#card-shadow)"/>
+        <!-- FastAPI Logo Circle -->
+        <circle cx="36" cy="57" r="18" fill="#059669"/>
+        <path d="M36 44 L28 58 L35 58 L34 70 L44 55 L37 55 Z" fill="#FFFFFF"/>
+        <text x="63" y="64" fill="#0F172A" font-size="20" font-weight="700">FastAPI</text>
+        <text x="80" y="92" text-anchor="middle" fill="#64748B" font-size="12" font-weight="500">(RESTful API)</text>
+      </g>
+
+      <!-- INTERNAL SERVER ARROWS -->
+
+      <!-- Arrow 2: FastAPI -> Color Engine (Up & Right) -->
+      <path d="M 660 210 C 660 160, 680 145, 725 145" stroke="#1E293B" stroke-width="2" marker-end="url(#arrow)"/>
+      <rect x="615" y="152" width="105" height="20" rx="4" fill="#E2E8F0"/>
+      <text x="667" y="166" text-anchor="middle" fill="#0F172A" font-size="11" font-weight="600">2. ส่งภาพสกัดสี</text>
+
+      <!-- 4. COLOR ENGINE BOX (Top Right) -->
+      <g transform="translate(735, 95)">
+        <rect x="0" y="0" width="190" height="105" rx="20" fill="#FFFFFF" filter="url(#card-shadow)"/>
+        <!-- Palette icon -->
+        <circle cx="32" cy="36" r="15" fill="#F59E0B"/>
+        <circle cx="26" cy="31" r="3.5" fill="#EF4444"/>
+        <circle cx="37" cy="31" r="3.5" fill="#10B981"/>
+        <circle cx="32" cy="42" r="3.5" fill="#3B82F6"/>
+        <text x="56" y="41" fill="#0F172A" font-size="17" font-weight="700">Color Engine</text>
+        <text x="95" y="68" text-anchor="middle" fill="#334155" font-size="12" font-weight="500">สกัดค่าสี RGB & CIELAB</text>
+        <text x="95" y="86" text-anchor="middle" fill="#64748B" font-size="11">(PIL / scikit-image / NumPy)</text>
+      </g>
+
+      <!-- Arrow 3: Color Engine -> AI Model (Downwards) -->
+      <path d="M 830 200 L 830 325" stroke="#1E293B" stroke-width="2" marker-end="url(#arrow)"/>
+      <rect x="765" y="252" width="130" height="22" rx="4" fill="#FFFFFF"/>
+      <text x="830" y="267" text-anchor="middle" fill="#0F172A" font-size="11" font-weight="600">3. ส่งฟีเจอร์สี 6 ค่า</text>
+
+      <!-- 5. AI MODEL BOX (Bottom Right) -->
+      <g transform="translate(735, 335)">
+        <rect x="0" y="0" width="190" height="105" rx="20" fill="#FFFFFF" filter="url(#card-shadow)"/>
+        <!-- AI Chip icon -->
+        <rect x="18" y="22" width="28" height="28" rx="8" fill="#2563EB"/>
+        <circle cx="32" cy="36" r="6" fill="#FFFFFF"/>
+        <text x="56" y="41" fill="#0F172A" font-size="17" font-weight="700">AI Model</text>
+        <text x="95" y="68" text-anchor="middle" fill="#334155" font-size="12" font-weight="500">ทำนายคะแนนพัดสี</text>
+        <text x="95" y="86" text-anchor="middle" fill="#64748B" font-size="11">(SVR model.pkl)</text>
+      </g>
+
+      <!-- Arrow 4: AI Model -> FastAPI (Down & Left) -->
+      <path d="M 735 390 C 660 390, 660 350, 660 325" stroke="#1E293B" stroke-width="2" marker-end="url(#arrow)"/>
+      <rect x="610" y="372" width="125" height="20" rx="4" fill="#E2E8F0"/>
+      <text x="672.5" y="386" text-anchor="middle" fill="#0F172A" font-size="11" font-weight="600">4. คืนค่าผลทำนาย</text>
+
+    </svg>
+  </div>
+
+</body>
+</html>

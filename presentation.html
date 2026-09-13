@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบประเมินเกรดสีไข่แดง DSM Fan ด้วย On-Device AI & Computer Vision</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #F59E0B;
+      --primary-dark: #D97706;
+      --primary-light: #FEF3C7;
+      --primary-subtle: #FFFBEB;
+      --secondary: #3B82F6;
+      --secondary-dark: #1D4ED8;
+      --secondary-light: #EFF6FF;
+      --accent: #8B5CF6;
+      --accent-light: #F5F3FF;
+      --success: #10B981;
+      --success-light: #ECFDF5;
+      --danger: #EF4444;
+      --dark: #0F172A;
+      --dark-card: #1E293B;
+      --card-bg: #FFFFFF;
+      --bg: #0B0F19;
+      --slide-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #1E293B;
+      --text-muted: #64748B;
+      --code-bg: #0F172A;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* Top Floating Navigation Bar */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 1.5rem;
+      z-index: 1000;
+      color: white;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: #F8FAFC;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #F59E0B, #EA580C);
+      color: white;
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #F1F5F9;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Kanit', sans-serif;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn-icon.active {
+      background: var(--primary);
+      color: #0F172A;
+      font-weight: 600;
+      border-color: var(--primary);
+    }
+
+    /* Presentation Deck Container */
+    .deck-container {
+      position: absolute;
+      top: 56px;
+      bottom: 60px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.25rem;
+      perspective: 1200px;
+    }
+
+    /* Slide Card */
+    .slide {
+      position: absolute;
+      width: 94%;
+      max-width: 1260px;
+      height: 94%;
+      max-height: 760px;
+      background: var(--slide-bg);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 2.5rem 3rem;
+      opacity: 0;
+      transform: scale(0.96) translateY(20px);
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: text;
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      z-index: 10;
+    }
+
+    /* Custom Scrollbar for Slides */
+    .slide::-webkit-scrollbar {
+      width: 6px;
+    }
+    .slide::-webkit-scrollbar-track {
+      background: #F1F5F9;
+      border-radius: 4px;
+    }
+    .slide::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+    .slide::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    /* Slide Content Elements */
+    .slide-header {
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #F1F5F9;
+      padding-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    .slide-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary-dark);
+      background: var(--primary-light);
+      padding: 0.2rem 0.65rem;
+      border-radius: 6px;
+      margin-bottom: 0.4rem;
+    }
+
+    .slide-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0F172A;
+      line-height: 1.25;
+    }
+
+    .slide-subtitle {
+      font-size: 1rem;
+      color: #64748B;
+      margin-top: 0.25rem;
+    }
+
+    .slide-num-pill {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #94A3B8;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      padding: 0.35rem 0.9rem;
+      border-radius: 9999px;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.75rem;
+      align-items: stretch;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    /* Cards */
+    .card {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-accent {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border-color: #FDE68A;
+    }
+
+    .card-blue {
+      background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+      border-color: #BFDBFE;
+    }
+
+    .card-green {
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      border-color: #A7F3D0;
+    }
+
+    .card-purple {
+      background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%);
+      border-color: #E9D5FF;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #1E293B;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Metric Callouts */
+    .metric-hero {
+      text-align: center;
+      padding: 1.5rem;
+      border-radius: 16px;
+      background: white;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .metric-value {
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .metric-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #64748B;
+      margin-top: 0.4rem;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #E2E8F0;
+      font-size: 0.95rem;
+      margin: 1rem 0;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+
+    th {
+      background: #F1F5F9;
+      color: #334155;
+      font-weight: 600;
+      border-bottom: 1px solid #CBD5E1;
+    }
+
+    td {
+      background: white;
+      border-bottom: 1px solid #F1F5F9;
+      color: #475569;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr.highlight td {
+      background: #FEF3C7;
+      color: #78350F;
+      font-weight: 600;
+    }
+
+    .badge-win {
+      background: #10B981;
+      color: white;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    /* Code Blocks */
+    .code-box {
+      background: #0F172A;
+      color: #F8FAFC;
+      border-radius: 12px;
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      border: 1px solid #334155;
+      margin: 0.75rem 0;
+    }
+
+    .kw { color: #F472B6; font-weight: 600; }
+    .fn { color: #60A5FA; }
+    .num { color: #34D399; }
+    .str { color: #FBBF24; }
+    .cm { color: #94A3B8; font-style: italic; }
+
+    /* Math Box */
+    .math-formula {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-left: 4px solid var(--primary);
+      padding: 0.9rem 1.25rem;
+      border-radius: 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.95rem;
+      color: #0F172A;
+      margin: 0.75rem 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    /* Visual Image Frame */
+    .img-frame {
+      border-radius: 14px;
+      border: 1px solid #E2E8F0;
+      overflow: hidden;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.04);
+      height: 100%;
+      min-height: 240px;
+    }
+
+    .img-frame img {
+      max-width: 100%;
+      max-height: 380px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .img-caption {
+      font-size: 0.8rem;
+      color: #64748B;
+      padding: 0.5rem 1rem;
+      text-align: center;
+      background: #F8FAFC;
+      width: 100%;
+      border-top: 1px solid #F1F5F9;
+    }
+
+    /* List styling */
+    ul.feat-list {
+      list-style: none;
+      margin-top: 0.5rem;
+    }
+
+    ul.feat-list li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #334155;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    ul.feat-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0.4rem;
+      color: var(--primary);
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+
+    /* Bottom Floating Action Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+      z-index: 1000;
+      color: white;
+    }
+
+    .progress-bar-container {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      margin: 0 2rem;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 8.33%;
+      background: linear-gradient(90deg, #F59E0B, #EA580C);
+      transition: width 0.3s ease;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.45rem 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Kanit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: var(--primary);
+      color: #0F172A;
+      font-weight: 600;
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .slide-counter {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      color: #94A3B8;
+      min-width: 90px;
+      text-align: center;
+    }
+
+    /* Overview Modal Overlay */
+    .overview-modal {
+      position: fixed;
+      top: 56px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(11, 15, 25, 0.96);
+      backdrop-filter: blur(16px);
+      z-index: 2000;
+      padding: 2.5rem;
+      overflow-y: auto;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .overview-modal.active {
+      display: block;
+      opacity: 1;
+    }
+
+    .overview-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+      padding-bottom: 2rem;
+    }
+
+    .overview-card {
+      background: #1E293B;
+      border: 2px solid #334155;
+      border-radius: 14px;
+      padding: 1.25rem;
+      cursor: pointer;
+      color: white;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .overview-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.3);
+    }
+
+    .overview-card.current {
+      border-color: var(--primary);
+      background: #2D3748;
+    }
+
+    .overview-num {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: rgba(245, 158, 11, 0.15);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+    }
+
+    .overview-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      line-height: 1.4;
+      color: #F1F5F9;
+    }
+
+    .overview-subtitle {
+      font-size: 0.8rem;
+      color: #94A3B8;
+      margin-top: 0.35rem;
+    }
+
+    /* Print / Continuous Scroll Mode */
+    body.scroll-mode {
+      overflow-y: auto;
+      height: auto;
+    }
+
+    body.scroll-mode .deck-container {
+      position: relative;
+      top: 70px;
+      bottom: auto;
+      flex-direction: column;
+      gap: 2.5rem;
+      padding: 2rem 1rem 6rem 1rem;
+    }
+
+    body.scroll-mode .slide {
+      position: relative;
+      display: flex !important;
+      opacity: 1 !important;
+      transform: none !important;
+      height: auto;
+      max-height: none;
+      margin-bottom: 2rem;
+    }
+
+    body.scroll-mode .bottom-bar {
+      display: none;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {
+      .slide {
+        padding: 1.5rem 1.5rem;
+      }
+      .slide-title {
+        font-size: 1.5rem;
+      }
+      .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr;
+      }
+      .metric-value {
+        font-size: 2.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <span class="brand-badge">EGG AI</span>
+      <span>Egg Yolk Color Grading & DSM Fan Prediction</span>
+    </div>
+    <div class="top-controls">
+      <button class="btn-icon" id="btnOverview" title="ดูภาพรวมสไลด์ทั้งหมด (กด O)">
+        <span>🗂️</span> ภาพรวมสไลด์
+      </button>
+      <button class="btn-icon" id="btnMode" title="สลับโหมดนำเสนอ / โหมดเลื่อนอ่าน (กด M)">
+        <span>📑</span> โหมดเอกสาร
+      </button>
+      <button class="btn-icon" id="btnFullscreen" title="เต็มจอ (กด F)">
+        <span>⛶</span> เต็มจอ
+      </button>
+    </div>
+  </header>
+
+  <!-- Presentation Deck Container -->
+  <main class="deck-container" id="deck">
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 1: Title Slide -->
+    <!-- ================================================================= -->
+    <section class="slide active" id="slide-1" data-title="หน้าปกโครงงาน">
+      <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 1.5rem 0;">
+        <div style="display: inline-flex; align-items: center; gap: 0.6rem; background: #FEF3C7; border: 1px solid #FDE68A; color: #92400E; padding: 0.4rem 1.25rem; border-radius: 9999px; font-size: 0.95rem; font-weight: 600; margin-bottom: 1.5rem;">
+          <span>🍳</span> การวิจัยและพัฒนาระบบ Machine Learning บนอุปกรณ์เคลื่อนที่ (On-Device AI)
+        </div>
+        
+        <h1 style="font-size: 2.8rem; font-weight: 800; color: #0F172A; line-height: 1.25; max-width: 960px; margin-bottom: 1.2rem;">
+          ระบบประเมินระดับสีไข่แดง <span style="background: linear-gradient(135deg, #F59E0B, #EA580C); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DSM Yolk Color Fan</span> ด้วย Computer Vision & On-Device SVR
+        </h1>
+        
+        <p style="font-size: 1.2rem; color: #475569; max-width: 820px; line-height: 1.7; margin-bottom: 2.5rem;">
+          ตรวจวัดระดับสีไข่แดงอัตโนมัติ 100% บนสมาร์ตโฟน โดยไม่ต้องเชื่อมต่ออินเทอร์เน็ตหรือคลาวด์ ด้วยสถาปัตยกรรม <strong>Pure Math SVR Inference</strong> ความแม่นยำสูงระดับ <strong>R² = 0.9185</strong> และเวลาประมวลผลต่ำกว่า <strong>1 มิลลิวินาที</strong>
+        </p>
+
+        <!-- 4 Key Stat Badges -->
+        <div class="grid-4" style="width: 100%; max-width: 1040px; margin-bottom: 2rem;">
+          <div class="metric-hero">
+            <div class="metric-value" style="color: #D97706;">0.9185</div>
+            <div class="metric-label">R² Score (ความแม่นยำ)</div>
+          </div>
+          <div class="metric-hero">
+            <div class="metric-value" style="color: #2563EB;">0.6403</div>
+            <div class="metric-label">Mean Absolute Error (MAE)</div>
+          </div>
+          <div class="metric-hero">
+            <div class="metric-value" style="color: #059669;">92.7%</div>
+            <div class="metric-label">ความคลาดเคลื่อน ±1 ระดับ</div>
+          </div>
+          <div class="metric-hero">
+            <div class="metric-value" style="color: #7C3AED;">107 KB</div>
+            <div class="metric-label">ขนาดโมเดล (Pure JSON)</div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.9rem; color: #94A3B8; display: flex; gap: 1.5rem; align-items: center;">
+          <span>🎯 Senior Project Presentation</span>
+          <span>•</span>
+          <span>💻 Flutter + OpenCV + Scikit-Learn</span>
+          <span>•</span>
+          <span>🔒 100% Offline & Private</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 2: Problem Statement & Motivation -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-2" data-title="ที่มาและความสำคัญของปัญหา">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Problem Statement</span>
+          <h2 class="slide-title">ที่มาและความสำคัญของปัญหา (Motivation & Challenges)</h2>
+          <p class="slide-subtitle">การเปรียบเทียบระหว่างวิธีการดั้งเดิมและแนวทางแก้ไขด้วยระบบดิจิทัล</p>
+        </div>
+        <div class="slide-num-pill">02 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Left: Current Problems -->
+        <div class="card" style="border-left: 4px solid var(--danger);">
+          <div class="card-title" style="color: #DC2626;">
+            <span>❌</span> ปัญหาของการวัดสีไข่แดงในปัจจุบัน (Traditional Method)
+          </div>
+          <ul class="feat-list">
+            <li><strong>การใช้พัดเทียบสี DSM (Roche Fan 1–15):</strong> ใช้สายตามนุษย์มองเทียบแผ่นสี ซึ่งเป็นอัตวิสัย (Subjective) ขึ้นกับประสบการณ์และความเมื่อยล้าของสายตาผู้ตรวจ</li>
+            <li><strong>ความไวต่อแสงแวดล้อม (Lighting Bias):</strong> ไฟฟลูออเรสเซนต์ แสงแดด หรือหลอดไส้ ส่งผลให้สายตามองเห็นสีไข่แดงผิดเพี้ยนไป 1–3 ระดับ</li>
+            <li><strong>Human Error สูง:</strong> ความคลาดเคลื่อนระหว่างผู้ประเมินคนละคน (Inter-observer variability) มักสูงกว่า 1.5 ระดับ</li>
+            <li><strong>เครื่องวัดสีเชิงอุตสาหกรรม (Colorimeter):</strong> มีราคาหลักแสนบาท ขนาดใหญ่ พกพาตรวจในฟาร์มหรือห้องครัวได้ยาก</li>
+          </ul>
+        </div>
+
+        <!-- Right: Digital Solution -->
+        <div class="card card-accent" style="border-left: 4px solid var(--primary);">
+          <div class="card-title" style="color: #B45309;">
+            <span>💡</span> ทางออกด้วย Computer Vision & On-Device AI ของเรา
+          </div>
+          <ul class="feat-list">
+            <li><strong>เปลี่ยนสมาร์ตโฟนเป็นเครื่องวัดมาตรฐาน:</strong> สแกนและตัดขอบไข่แดงอัตโนมัติด้วยระบบคอมพิวเตอร์วิทัศน์ระดับพิกเซล</li>
+            <li><strong>แปลงเข้าสู่มาตรฐานสากล CIELAB (D65):</strong> แยกมิติความสว่าง (L*) ออกจากเนื้อสีแท้จริง (a*, b*) ขจัดปัญหาแสงเงาสะท้อน</li>
+            <li><strong>อัลกอริทึม SVR (RBF Kernel):</strong> ดัดผิวทำนายแบบ Non-linear แม่นยำเทียบเท่าเครื่องวัดสีระดับห้องปฏิบัติการ</li>
+            <li><strong>ทำงานออฟไลน์ 100% (No Cloud):</strong> ไม่มีค่าเซิร์ฟเวอร์รายเดือน ปลอดภัยต่อความลับของฟาร์ม และประมวลผลทันทีในเสี้ยววินาที</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-size: 1.5rem;">🎯</span>
+          <span style="font-weight: 600; color: #1E293B;">เป้าหมายทางวิศวกรรม:</span>
+          <span style="color: #475569;">สร้างระบบที่วัดสีไข่แดงได้แม่นยำ ค่าคลาดเคลื่อน (MAE) &lt; 0.70 ระดับ และทำงานบนสมาร์ตโฟนได้ 100% ออฟไลน์</span>
+        </div>
+        <span class="badge-win">เป้าหมายสำเร็จ 100% (MAE = 0.6403)</span>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 3: System Architecture Overview -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-3" data-title="สถาปัตยกรรมระบบโดยรวม">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">System Architecture</span>
+          <h2 class="slide-title">สถาปัตยกรรมระบบ 4 ขั้นตอน (End-to-End Pipeline)</h2>
+          <p class="slide-subtitle">การเชื่อมโยงจากภาพถ่ายไข่แดงดิบ สู่การวิเคราะห์สี และการทำนายคะแนนบนมือถือ</p>
+        </div>
+        <div class="slide-num-pill">03 / 12</div>
+      </div>
+
+      <!-- Pipeline Step Cards -->
+      <div class="grid-4" style="margin-bottom: 1.5rem;">
+        
+        <div class="card" style="border-top: 4px solid #F59E0B;">
+          <div style="font-size: 0.8rem; font-weight: 700; color: #F59E0B; margin-bottom: 0.25rem;">ขั้นตอนที่ 1</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.5rem;">Auto-Crop Yolk</div>
+          <div style="font-size: 0.82rem; font-family: 'Fira Code', monospace; color: #64748B; background: #E2E8F0; padding: 0.2rem 0.4rem; border-radius: 4px; display: inline-block; margin-bottom: 0.75rem;">batch_auto_crop.py</div>
+          <p style="font-size: 0.88rem; color: #475569; line-height: 1.5;">
+            แปลง BGR → HSV Masking กรองสีส้ม-เหลือง แยกแครอทด้วย Connected Components ตัดภาพสี่เหลี่ยมจัตุรัสครอบไข่แดง
+          </p>
+        </div>
+
+        <div class="card" style="border-top: 4px solid #3B82F6;">
+          <div style="font-size: 0.8rem; font-weight: 700; color: #3B82F6; margin-bottom: 0.25rem;">ขั้นตอนที่ 2</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.5rem;">Color Extraction</div>
+          <div style="font-size: 0.82rem; font-family: 'Fira Code', monospace; color: #64748B; background: #E2E8F0; padding: 0.2rem 0.4rem; border-radius: 4px; display: inline-block; margin-bottom: 0.75rem;">build_features.py</div>
+          <p style="font-size: 0.88rem; color: #475569; line-height: 1.5;">
+            เจาะเฉพาะวงกลมกลาง 42% เว้นขอบสะท้อนแสง แปลงระบบสี RGB สู่ CIELAB (D65) สกัดได้ 6 เวกเตอร์คุณลักษณะ
+          </p>
+        </div>
+
+        <div class="card" style="border-top: 4px solid #10B981;">
+          <div style="font-size: 0.8rem; font-weight: 700; color: #10B981; margin-bottom: 0.25rem;">ขั้นตอนที่ 3</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.5rem;">Model Training</div>
+          <div style="font-size: 0.82rem; font-family: 'Fira Code', monospace; color: #64748B; background: #E2E8F0; padding: 0.2rem 0.4rem; border-radius: 4px; display: inline-block; margin-bottom: 0.75rem;">train_compare_models.py</div>
+          <p style="font-size: 0.88rem; color: #475569; line-height: 1.5;">
+            เปรียบเทียบ 5 อัลกอริทึมด้วย 5-Fold Cross Validation คัดเลือก SVR (RBF Kernel) ที่ทำคะแนนแม่นยำสูงสุด R² = 0.9185
+          </p>
+        </div>
+
+        <div class="card" style="border-top: 4px solid #8B5CF6;">
+          <div style="font-size: 0.8rem; font-weight: 700; color: #8B5CF6; margin-bottom: 0.25rem;">ขั้นตอนที่ 4</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.5rem;">On-Device Deploy</div>
+          <div style="font-size: 0.82rem; font-family: 'Fira Code', monospace; color: #64748B; background: #E2E8F0; padding: 0.2rem 0.4rem; border-radius: 4px; display: inline-block; margin-bottom: 0.75rem;">export_best_model.py</div>
+          <p style="font-size: 0.88rem; color: #475569; line-height: 1.5;">
+            แปลงพารามิเตอร์คณิตศาสตร์เป็น JSON (107 KB) โหลดเข้ารันบน Flutter มือถือด้วย Pure Dart Math รวดเร็วระดับไมโครวินาที
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Architecture Visual Diagram -->
+      <div class="card card-blue" style="display: flex; align-items: center; justify-content: space-around; padding: 1.25rem;">
+        <div style="text-align: center;">
+          <div style="font-size: 1.8rem;">📱</div>
+          <div style="font-weight: 600; font-size: 0.9rem;">ถ่ายภาพไข่สด</div>
+          <div style="font-size: 0.75rem; color: #64748B;">กล้องสมาร์ตโฟน</div>
+        </div>
+        <div style="color: #94A3B8; font-size: 1.4rem;">➔</div>
+        <div style="text-align: center;">
+          <div style="font-size: 1.8rem;">✂️</div>
+          <div style="font-weight: 600; font-size: 0.9rem;">HSV Yolk Masking</div>
+          <div style="font-size: 0.75rem; color: #64748B;">OpenCV / Pure Dart</div>
+        </div>
+        <div style="color: #94A3B8; font-size: 1.4rem;">➔</div>
+        <div style="text-align: center;">
+          <div style="font-size: 1.8rem;">🎯</div>
+          <div style="font-weight: 600; font-size: 0.9rem;">Circular Mask 42%</div>
+          <div style="font-size: 0.75rem; color: #64748B;">CIE D65 Standard</div>
+        </div>
+        <div style="color: #94A3B8; font-size: 1.4rem;">➔</div>
+        <div style="text-align: center;">
+          <div style="font-size: 1.8rem;">🧠</div>
+          <div style="font-weight: 600; font-size: 0.9rem;">SVR Math Weights</div>
+          <div style="font-size: 0.75rem; color: #64748B;">model_weights.json</div>
+        </div>
+        <div style="color: #94A3B8; font-size: 1.4rem;">➔</div>
+        <div style="text-align: center;">
+          <div style="font-size: 1.8rem;">🏆</div>
+          <div style="font-weight: 600; font-size: 0.9rem;">DSM Fan Score (1-15)</div>
+          <div style="font-size: 0.75rem; color: #64748B;">ผลทำนายทันที &lt;1ms</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 4: Phase 1 — Auto-Crop & Computer Vision -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-4" data-title="ขั้นตอนที่ 1: การตัดขอบภาพอัตโนมัติ">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Phase 1: Computer Vision</span>
+          <h2 class="slide-title">ขั้นตอนที่ 1: การตัดภาพไข่แดงอัตโนมัติ (Auto-Crop Yolk)</h2>
+          <p class="slide-subtitle">การประยุกต์ใช้ HSV Color Masking, มอร์โฟโลยี และ Connected Component Analysis</p>
+        </div>
+        <div class="slide-num-pill">04 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card-title" style="color: #D97706;">
+            <span>🔬</span> หลักการทำงานทางคอมพิวเตอร์วิทัศน์
+          </div>
+          <ul class="feat-list">
+            <li><strong>HSV Color Space:</strong> แยก "เฉดสีแท้จริง" (Hue 10–28 OpenCV / 20°–56° Dart) ออกจากความสว่าง</li>
+            <li><strong>Saturation Threshold (&ge; 80 / &ge; 0.314):</strong> จุดชี้ขาดสำคัญ! บังคับว่าต้องมีความสดของสี ทำให้ <strong>ตัดไข่ขาว จานสีขาว และพื้นหลังสีครีมทิ้งได้ 100%</strong></li>
+            <li><strong>Morphological Cleaning:</strong> ใช้ตัวดำเนินการ Close และ Open ด้วยเคอร์เนลวงกลมขนาด 7×7 เพื่ออุดรูพรุนและตัดจุดเม็ดสีรบกวน</li>
+            <li><strong>Connected Component Analysis (เคสแครอท):</strong> หากมีเศษแครอทสีส้มในจาน ระบบจะวัดพื้นที่ก้อนวัตถุและเลือกเฉพาะก้อนที่ใหญ่ที่สุด (ไข่แดง 11,975 พิกเซล vs แครอท 1,329 พิกเซล) ตัดแครอททิ้งได้ 100%</li>
+          </ul>
+
+          <div class="code-box">
+<span class="cm"># สเต็ปตัด Bounding Box สี่เหลี่ยมจัตุรัส</span>
+size = <span class="fn">max</span>(width, height) * <span class="num">1.08</span>  <span class="cm"># เผื่อ Padding</span>
+x1 = <span class="fn">max</span>(<span class="num">0</span>, <span class="fn">int</span>(cx - size / <span class="num">2</span>))
+y1 = <span class="fn">max</span>(<span class="num">0</span>, <span class="fn">int</span>(cy - size / <span class="num">2</span>))
+cropped = image.<span class="fn">crop</span>((x1, y1, x1 + size, y1 + size))
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="img-frame">
+            <img src="model_dev/plots/crop_math_visual.png" data-name="crop_math_visual.png" alt="Crop Coordinate Geometry" onerror="this.src='plots/crop_math_visual.png'">
+            <div class="img-caption">เรขาคณิตการคำนวณพิกัดมุมบนซ้าย (x1, y1) จากจุดกึ่งกลางมวล (cx, cy) และขยายกล่อง 108%</div>
+          </div>
+          <div class="callout callout-success" style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.88rem; color: #065F46;">
+            <strong>✨ ประโยชน์เสริม (YOLO Ready):</strong> สคริปต์นี้สร้างไฟล์กำกับพิกัด BBox <code>.txt</code> แบบ Normalized Coordinates มาตรฐาน YOLO ครบทั้ง 647 รูปโดยอัตโนมัติ พร้อมส่งต่อให้งานวิจัยรุ่นต่อไปทันที
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 5: Phase 2 — Feature Extraction & CIELAB -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-5" data-title="ขั้นตอนที่ 2: การสกัดฟีเจอร์ค่าสี">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Phase 2: Color Calibration</span>
+          <h2 class="slide-title">ขั้นตอนที่ 2: การสกัดฟีเจอร์ค่าสี (Circular Mask & CIELAB)</h2>
+          <p class="slide-subtitle">การขจัดแสงสะท้อนมันวาว และการแปลงปริภูมิสีสู่มาตรฐานสากล CIE 1976</p>
+        </div>
+        <div class="slide-num-pill">05 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card-title" style="color: #2563EB;">
+            <span>🎯</span> นวัตกรรม Center Circular Mask 42%
+          </div>
+          <p style="font-size: 0.95rem; color: #475569; margin-bottom: 0.75rem;">
+            "รูปภาพดิจิทัลตัดมาเป็นสี่เหลี่ยม แต่ไข่แดงแท้จริงเป็นทรงกลม"
+          </p>
+          <ul class="feat-list">
+            <li><strong>ตัดมุมทั้ง 4 มุมทิ้ง:</strong> ป้องกันเศษไข่ขาวหรือขอบจานที่ติดมาตรงมุมภาพเข้ามาปนเปื้อน</li>
+            <li><strong>ตัดแสงสะท้อนขอบไข่ (Specular Highlights):</strong> บริเวณขอบไข่แดงจะมีความโค้งนูนและสะท้อนแสงไฟนีออน</li>
+            <li><strong>เจาะเฉพาะเนื้อไข่แดงแท้:</strong> รัศมี $R = \min(W, H) \times 0.42$ ดูดเฉพาะพิกเซลเนื้อไข่แดงที่สม่ำเสมอที่สุด</li>
+          </ul>
+
+          <div class="card-title" style="color: #2563EB; margin-top: 1rem;">
+            <span>🌈</span> 6 เวกเตอร์คุณลักษณะ [R, G, B, L*, a*, b*]
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>ฟีเจอร์</th>
+                <th>มาตรฐาน</th>
+                <th>ความสำคัญ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>R, G, B</strong></td>
+                <td>sRGB (0–255)</td>
+                <td>ค่าความเข้มแสงแม่สีจากเซนเซอร์กล้อง</td>
+              </tr>
+              <tr>
+                <td><strong>L*</strong></td>
+                <td>CIELAB</td>
+                <td>ความสว่าง (Lightness: 0=มืด, 100=ขาว)</td>
+              </tr>
+              <tr class="highlight">
+                <td><strong>a*</strong></td>
+                <td>CIELAB</td>
+                <td><strong>พระเอกสำคัญ!</strong> แกนเขียว(-) ถึง แดง(+) สัมพันธ์กับเกรดสีสูงสุด</td>
+              </tr>
+              <tr>
+                <td><strong>b*</strong></td>
+                <td>CIELAB</td>
+                <td>แกนน้ำเงิน(-) ถึง เหลือง(+) สะท้อนปริมาณแคโรทีนอยด์</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="img-frame">
+            <img src="model_dev/plots/feature_correlation_matrix.png" data-name="feature_correlation_matrix.png" alt="Feature Correlation Matrix" onerror="this.src='plots/feature_correlation_matrix.png'">
+            <div class="img-caption">สหสัมพันธ์ระหว่าง 6 ฟีเจอร์สีกับค่าเป้าหมาย Fan Score (ค่า a* มีสหสัมพันธ์สูงสุด)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 6: Phase 3 — Model Benchmark & Evaluation -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-6" data-title="ขั้นตอนที่ 3: การประเมินและเปรียบเทียบโมเดล">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Phase 3: Machine Learning Competition</span>
+          <h2 class="slide-title">ขั้นตอนที่ 3: การเปรียบเทียบโมเดล (Model Benchmark & A/B Test)</h2>
+          <p class="slide-subtitle">ทดสอบ 5 อัลกอริทึมด้วย Stratified 5-Fold Cross Validation บนชุดข้อมูล 647 ภาพ</p>
+        </div>
+        <div class="slide-num-pill">06 / 12</div>
+      </div>
+
+      <div>
+        <table style="margin-bottom: 1.25rem;">
+          <thead>
+            <tr>
+              <th>อัลกอริทึม (Candidate Models)</th>
+              <th>Original R²</th>
+              <th>Auto-Crop R²</th>
+              <th>การพัฒนา (Δ R²)</th>
+              <th>MAE</th>
+              <th>RMSE</th>
+              <th>แม่นยำใน ±1 ระดับ</th>
+              <th>ผลสรุป</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight">
+              <td><strong>SVR (RBF Kernel) 🥇</strong></td>
+              <td>0.9175</td>
+              <td><strong>0.9185</strong></td>
+              <td style="color:#15803D; font-weight:700;">+0.0010</td>
+              <td><strong>0.6403</strong></td>
+              <td><strong>0.8407</strong></td>
+              <td><strong>92.7%</strong></td>
+              <td><span class="badge-win">อันดับ 1 ชนะเลิศ 🏆</span></td>
+            </tr>
+            <tr>
+              <td>Gradient Boosting Regressor</td>
+              <td>0.9063</td>
+              <td><strong>0.9107</strong></td>
+              <td style="color:#15803D; font-weight:700;">+0.0045</td>
+              <td>0.6554</td>
+              <td>0.8797</td>
+              <td>92.3%</td>
+              <td>รองชนะเลิศอันดับ 1</td>
+            </tr>
+            <tr>
+              <td>Random Forest Regressor</td>
+              <td>0.9087</td>
+              <td>0.9078</td>
+              <td>-0.0009</td>
+              <td>0.6555</td>
+              <td>0.8943</td>
+              <td>92.3%</td>
+              <td>รองชนะเลิศอันดับ 2</td>
+            </tr>
+            <tr>
+              <td>Linear Regression</td>
+              <td>0.8718</td>
+              <td><strong>0.8738</strong></td>
+              <td style="color:#15803D; font-weight:700;">+0.0020</td>
+              <td>0.8071</td>
+              <td>1.0450</td>
+              <td>84.9%</td>
+              <td>โมเดลเชิงเส้นพื้นฐาน</td>
+            </tr>
+            <tr>
+              <td>Ridge Regression (α=1.0)</td>
+              <td>0.8545</td>
+              <td><strong>0.8568</strong></td>
+              <td style="color:#15803D; font-weight:700;">+0.0022</td>
+              <td>0.8769</td>
+              <td>1.1130</td>
+              <td>82.8%</td>
+              <td>โมเดลเชิงเส้นจำกัดน้ำหนัก</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="grid-2">
+          <div class="card card-green">
+            <div class="card-title" style="color: #065F46;">
+              <span>✅</span> ข้อค้นพบทางวิทยาศาสตร์จากการทดลอง A/B Testing
+            </div>
+            <ul class="feat-list" style="color: #065F46;">
+              <li><strong>Auto-Crop ยกระดับความแม่นยำ AI ได้จริง:</strong> โมเดลเกือบทุกตัวมีค่า R² สูงขึ้นและค่าความคลาดเคลื่อน MAE ลดลงเมื่อฝึกด้วยภาพที่ผ่าน Auto-Crop</li>
+              <li><strong>ความเที่ยงตรงระดับพิกเซล:</strong> ระบบคอมพิวเตอร์ตัดภาพด้วยความสม่ำเสมอสูงกว่าสายตามนุษย์ ลด Noise ในข้อมูลตั้งต้น</li>
+            </ul>
+          </div>
+
+          <div class="card card-accent">
+            <div class="card-title" style="color: #92400E;">
+              <span>📊</span> ความสามารถในการใช้งานจริง (Within ±1 Accuracy)
+            </div>
+            <p style="font-size: 0.95rem; color: #78350F; line-height: 1.6;">
+              โมเดล SVR (RBF Kernel) สามารถทำนายคะแนนไข่แดงได้ถูกต้องตรงเป๊ะ หรือคลาดเคลื่อนไม่เกิน 1 ระดับสี สูงถึง <strong>92.7%</strong> ซึ่งเทียบเท่าหรือดีกว่าความแม่นยำของมนุษย์ผู้เชี่ยวชาญในฟาร์ม
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 7: Deep Dive — SVR Mathematical Rationale -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-7" data-title="เจาะลึก: ทำไมโมเดล SVR RBF ถึงชนะเลิศ">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Deep Dive Theory</span>
+          <h2 class="slide-title">ทำไม SVR (RBF Kernel) ถึงชนะโมเดลชนิดอื่น?</h2>
+          <p class="slide-subtitle">ทฤษฎี Support Vector Regression, ε-Insensitive Tube และ Gaussian Non-linearity</p>
+        </div>
+        <div class="slide-num-pill">07 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card-title" style="color: #D97706;">
+            <span>🔬</span> 3 เหตุผลทางทฤษฎีที่ทำให้ SVR มีเสถียรภาพสูงสุด
+          </div>
+          
+          <div style="margin-bottom: 1rem;">
+            <strong style="color: #0F172A;">1. Gaussian RBF Kernel (Radial Basis Function):</strong>
+            <p style="font-size: 0.9rem; color: #475569; margin-top: 0.2rem;">
+              การเปลี่ยนแปลงของระดับสีไข่แดงในพื้นที่สี 6 มิติ มีพฤติกรรมเป็น <strong>Non-linear Manifold</strong> เส้นตรงทั่วไปไม่สามารถฟิตได้ดี ฟังก์ชัน RBF จึงดัดเส้นโค้งรับข้อมูลได้อย่างแม่นยำ
+            </p>
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <strong style="color: #0F172A;">2. ε-Insensitive Loss Tube (ε = 0.1):</strong>
+            <p style="font-size: 0.9rem; color: #475569; margin-top: 0.2rem;">
+              ระบบสร้าง "ท่อความเผื่อ" ความกว้าง ε = 0.1 จุดข้อมูลที่คลาดเคลื่อนเล็กน้อยจะได้รับโทษเป็น 0 ทำให้โมเดล <strong>ไม่ถูกรบกวนจาก Noise หรือแสงสะท้อนเล็กๆ น้อยๆ</strong>
+            </p>
+          </div>
+
+          <div>
+            <strong style="color: #0F172A;">3. ขอบเขตการตัดสินใจจาก Support Vectors:</strong>
+            <p style="font-size: 0.9rem; color: #475569; margin-top: 0.2rem;">
+              โมเดลไม่ได้ท่องจำทุกจุด แต่คัดเลือกจุดวิกฤต 556 จุด จาก 647 ภาพ มาสร้างระนาบรองรับ ทำให้มีความทนทานต่อ Overfitting เหนือกว่า Decision Trees อย่างชัดเจน
+            </p>
+          </div>
+
+          <div class="math-formula">
+            K(x, x') = exp( -γ ‖ x - x' ‖² ) &nbsp; [γ = 1 / (6 × σ²)]
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div class="img-frame">
+            <img src="model_dev/plots/actual_vs_predicted.png" data-name="actual_vs_predicted.png" alt="Actual vs Predicted SVR" onerror="this.src='plots/actual_vs_predicted.png'">
+            <div class="img-caption">กราฟ Actual vs Predicted ของ SVR (จุดเกาะเส้นทแยงมุม 45° แน่นอน ยืนยันความแม่นยำ R² = 0.9185)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 8: Phase 4 — 100% On-Device AI Math Weights -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-8" data-title="ขั้นตอนที่ 4: การแปลงโมเดลรันบนมือถือ">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Phase 4: On-Device Deployment</span>
+          <h2 class="slide-title">ขั้นตอนที่ 4: สถาปัตยกรรม On-Device AI (107 KB Pure JSON)</h2>
+          <p class="slide-subtitle">การแกะสมการ Scikit-Learn เป็น Pure Dart Math ไม่พึ่งพา TFLite, ONNX หรือ Backend</p>
+        </div>
+        <div class="slide-num-pill">08 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card-title" style="color: #7C3AED;">
+            <span>💡</span> ทำไมไม่ใช้ TensorFlow Lite หรือ ONNX?
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>มิติเปรียบเทียบ</th>
+                <th>TFLite / ONNX</th>
+                <th>Pure Math JSON (ของเรา) 🏆</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ขนาดไฟล์ Dependency</td>
+                <td>15 – 30 MB (แอปบวม)</td>
+                <td><strong style="color:#10B981;">0 MB (Native Dart)</strong></td>
+              </tr>
+              <tr>
+                <td>ขนาดไฟล์โมเดล</td>
+                <td>หลายเมกะไบต์</td>
+                <td><strong style="color:#10B981;">107 KB (model_weights.json)</strong></td>
+              </tr>
+              <tr>
+                <td>เวลา Inference</td>
+                <td>10 – 30 ms</td>
+                <td><strong style="color:#10B981;">&lt; 0.001 ms (เสี้ยววินาที)</strong></td>
+              </tr>
+              <tr>
+                <td>ความเข้ากันได้</td>
+                <td>เสี่ยง Crash บนมือถือบางรุ่น</td>
+                <td><strong style="color:#10B981;">รันได้ 100% บนทุกอุปกรณ์</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="card-title" style="color: #7C3AED; margin-top: 1rem;">
+            <span>📐</span> สมการทำนายด้วยคณิตศาสตร์เพียวๆ
+          </div>
+          <div class="math-formula" style="font-size: 0.88rem;">
+            f(x) = ∑ [ αᵢ × exp( -γ ‖ (x - μ)/σ - SVᵢ ‖² ) ] + Intercept
+          </div>
+          <p style="font-size: 0.85rem; color: #64748B;">
+            สมการนี้เขียนขึ้นด้วย Pure Dart โดยโหลดค่าเวกเตอร์ Support Vectors (556 ตัว), ค่าน้ำหนัก Dual Coef (α) และค่า Scaler Mean/Scale จาก JSON มาคูณบวกในหน่วยความจำ RAM ทันที
+          </p>
+        </div>
+
+        <div>
+          <div class="card-title" style="color: #7C3AED;">
+            <span>📦</span> โครงสร้างภายใน `model_weights.json`
+          </div>
+          <div class="code-box" style="font-size: 0.82rem; max-height: 380px;">
+{
+  <span class="str">"model_type"</span>: <span class="str">"SVR_RBF"</span>,
+  <span class="str">"r2_score"</span>: <span class="num">0.9185</span>,
+  <span class="str">"feature_names"</span>: [<span class="str">"r"</span>, <span class="str">"g"</span>, <span class="str">"b"</span>, <span class="str">"l"</span>, <span class="str">"a"</span>, <span class="str">"b_lab"</span>],
+  <span class="str">"scaler_mean"</span>: [<span class="num">197.819</span>, <span class="num">130.447</span>, <span class="num">23.890</span>, <span class="num">60.006</span>, <span class="num">18.296</span>, <span class="num">60.774</span>],
+  <span class="str">"scaler_scale"</span>: [<span class="num">22.926</span>, <span class="num">25.010</span>, <span class="num">14.773</span>, <span class="num">8.622</span>, <span class="num">7.334</span>, <span class="num">7.016</span>],
+  <span class="str">"gamma"</span>: <span class="num">0.16666666666666666</span>,
+  <span class="str">"intercept"</span>: <span class="num">7.84712488</span>,
+  <span class="str">"support_vectors_count"</span>: <span class="num">556</span>,
+  <span class="str">"dual_coef"</span>: [<span class="num">1.4230</span>, <span class="num">-0.8921</span>, ...],
+  <span class="str">"support_vectors"</span>: [[...], [...], ...]
+}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 9: Mathematical Parity & Verification -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-9" data-title="การตรวจสอบความเที่ยงตรงข้ามแพลตฟอร์ม">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Parity Verification</span>
+          <h2 class="slide-title">การพิสูจน์ความเท่าเทียม (Cross-Platform Parity)</h2>
+          <p class="slide-subtitle">ผลการรันชุดทดสอบยืนยัน 4 ระดับ ระหว่าง OpenCV (Python) และ Pure Dart</p>
+        </div>
+        <div class="slide-num-pill">09 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card-title" style="color: #0F172A;">
+            <span>⚖️</span> สูตรแปลงสเกลสี HSV ระหว่าง OpenCV และ Dart
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>มิติสี</th>
+                <th>OpenCV (Python)</th>
+                <th>Standard Dart</th>
+                <th>สูตรแปลงคณิตศาสตร์</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Hue (H)</td>
+                <td>0 – 180</td>
+                <td>0° – 360°</td>
+                <td><code>dart_H = opencv_H × 2</code></td>
+              </tr>
+              <tr>
+                <td>Saturation (S)</td>
+                <td>0 – 255</td>
+                <td>0.0 – 1.0</td>
+                <td><code>dart_S = opencv_S ÷ 255</code></td>
+              </tr>
+              <tr>
+                <td>Value (V)</td>
+                <td>0 – 255</td>
+                <td>0.0 – 1.0</td>
+                <td><code>dart_V = opencv_V ÷ 255</code></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="callout callout-success" style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 1rem; margin-top: 1rem;">
+            <div style="font-weight: 700; color: #065F46; font-size: 1.05rem; margin-bottom: 0.35rem;">
+              🏆 ผลการทดสอบ Numerical Parity Check
+            </div>
+            <p style="font-size: 0.9rem; color: #065F46; line-height: 1.5;">
+              ผลต่างการทำนายระหว่าง Scikit-Learn Python กับ Pure Dart Math บนชุดข้อมูล 647 ภาพ ได้ค่าความคลาดเคลื่อน <strong>|Δ| = 2.0 × 10⁻¹³</strong> (ตรงกัน 100% ถึงทศนิยมตำแหน่งที่ 13)
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <div class="card-title" style="color: #0F172A;">
+            <span>🧪</span> ผลสรุป 4 ชุดทดสอบยืนยัน (Verification Suite)
+          </div>
+
+          <div class="card card-green" style="margin-bottom: 0.75rem; padding: 0.9rem 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>Test A: test_hsv_equivalence.py</strong>
+              <span class="badge-win">PASSED ✓</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #065F46; margin-top: 0.25rem;">
+              เปรียบเทียบพิกเซล HSV Mask 12,000,000 จุด ผลลัพธ์: <strong>ตรงกัน 100.0% (0 mismatch)</strong>
+            </div>
+          </div>
+
+          <div class="card card-green" style="margin-bottom: 0.75rem; padding: 0.9rem 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>Test B: test_lab_equivalence.py</strong>
+              <span class="badge-win">PASSED ✓</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #065F46; margin-top: 0.25rem;">
+              ทดสอบสูตร CIELAB D65 เทียบกับ scikit-image ผลลัพธ์: <strong>ค่าความต่าง = 0.000</strong>
+            </div>
+          </div>
+
+          <div class="card card-green" style="margin-bottom: 0.75rem; padding: 0.9rem 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>Test C: test_crop_consistency.py</strong>
+              <span class="badge-win">PASSED ✓</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #065F46; margin-top: 0.25rem;">
+              ทดสอบพิกัดครอบตัดบนภาพไข่จริง 5 ภาพ ผลลัพธ์: <strong>ผลต่างค่า RGB เฉลี่ย = 0.0 (&lt; 5.0)</strong>
+            </div>
+          </div>
+
+          <div class="card card-green" style="padding: 0.9rem 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>Test D: test_score_comparison.py</strong>
+              <span class="badge-win">PASSED ✓</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #065F46; margin-top: 0.25rem;">
+              ทดสอบทำนายคะแนนไข่จริงครบกระบวนการ 20 ภาพ ผลลัพธ์: <strong>ผลต่างคะแนน = 0.0 (&lt; 0.1)</strong>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 10: Mobile Application & UX (Circular 4-Handle Cropper) -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-10" data-title="แอปพลิเคชันมือถือและประสบการณ์ผู้ใช้">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Mobile Application UX</span>
+          <h2 class="slide-title">แอปพลิเคชันมือถือ (Flutter CropScreen & Interaction)</h2>
+          <p class="slide-subtitle">การออกแบบ CropScreen วงกลม 4 จุดลากอิสระ พร้อมระบบตรวจสอบความถูกต้องโดยผู้ใช้</p>
+        </div>
+        <div class="slide-num-pill">10 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card-title" style="color: #F59E0B;">
+            <span>✨</span> ฟังก์ชันการใช้งานหน้า CropScreen
+          </div>
+          <ul class="feat-list">
+            <li><strong>Auto-Detection เริ่มต้นอัตโนมัติ:</strong> ทันทีที่ถ่ายภาพ ระบบ Pure Dart จะสแกนค้นหาไข่แดงและล็อกตำแหน่งวงกลมครอบให้ทันทีโดยที่ผู้ใช้ไม่ต้องลากเอง</li>
+            <li><strong>4 จุด Handle สีขาวทิศหลัก (Cardinal Handles):</strong> หากภาพถ่ายมีมุมกล้องเอียงหรือต้องการปรับแต่ง ผู้ใช้สามารถลากจุดสีขาวบน, ล่าง, ซ้าย หรือขวา เพื่อย่อ/ขยายรัศมีได้อย่างอิสระ</li>
+            <li><strong>ลากจุดกึ่งกลางเพื่อย้ายวงกลม:</strong> แตะและลากบริเวณด้านในวงกลมเพื่อเลื่อนจุดศูนย์กลาง มีกากบาท (+) แสดงจุดกึ่งกลาง</li>
+            <li><strong>คำแนะนำกำกับชัดเจน:</strong> มีป้ายแนะนำ "ลากใน = ย้าย" และ "ลากจุดขาว = ปรับขนาด"</li>
+            <li><strong>ยืนยันตำแหน่งก่อนประมวลผล:</strong> มี Pop-up Modal ตรวจสอบภาพพร้อมปุ่ม "ย้อนกลับไปแก้" หรือ "ยืนยันประมวลผลทันที"</li>
+          </ul>
+
+          <div class="card card-accent" style="margin-top: 1rem;">
+            <div class="card-title" style="color: #92400E;">
+              <span>📱</span> หน้าจอแสดงผลคะแนน (Result Screen)
+            </div>
+            <p style="font-size: 0.88rem; color: #78350F; line-height: 1.6;">
+              แสดงผลคะแนน DSM Fan Score (1–15) ตัวเลขขนาดใหญ่ พร้อมระดับชั้นคุณภาพไข่แดง (Light, Medium, Deep Orange, Premium) และแถบสีมาตรฐานเทียบเคียง พร้อมเซฟประวัติได้ทันที
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Mobile UI Simulation Box -->
+        <div style="background: #0F172A; border-radius: 24px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155;">
+          
+          <!-- Mock Phone Screen -->
+          <div style="width: 270px; height: 460px; background: #1E293B; border-radius: 20px; border: 3px solid #475569; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+            
+            <!-- Phone Header -->
+            <div style="background: #0F172A; color: white; padding: 0.6rem 0.8rem; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+              <span>← ปรับตำแหน่ง</span>
+              <span style="color: #F59E0B; font-weight: 600;">Egg Yolk AI</span>
+              <span>ℹ️</span>
+            </div>
+
+            <!-- Viewport with Circular Mask -->
+            <div style="flex: 1; position: relative; background: #334155; display: flex; align-items: center; justify-content: center;">
+              <!-- Simulated Egg Yolk in center -->
+              <div style="width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, #F59E0B 40%, #D97706 90%); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); position: relative;">
+                
+                <!-- Crosshair center -->
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: 700; font-size: 1.2rem; text-shadow: 0 1px 3px black;">+</div>
+                
+                <!-- 4 Cardinal White Handle Dots -->
+                <!-- Top -->
+                <div style="position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 12px; height: 12px; background: white; border: 2px solid #F59E0B; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"></div>
+                <!-- Bottom -->
+                <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 12px; height: 12px; background: white; border: 2px solid #F59E0B; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"></div>
+                <!-- Left -->
+                <div style="position: absolute; left: -6px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: white; border: 2px solid #F59E0B; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"></div>
+                <!-- Right -->
+                <div style="position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: white; border: 2px solid #F59E0B; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"></div>
+              </div>
+
+              <!-- Floating Tooltip badges -->
+              <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); color: white; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px;">
+                ลากใน = ย้าย
+              </div>
+              <div style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); color: white; font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px;">
+                ลากจุดขาว = ย่อ/ขยาย
+              </div>
+            </div>
+
+            <!-- Bottom Card with Action Buttons -->
+            <div style="background: white; padding: 0.85rem; border-top-left-radius: 16px; border-top-right-radius: 16px;">
+              <div style="font-size: 0.75rem; color: #475569; margin-bottom: 0.5rem; text-align: center;">
+                ตรวจพบไข่แดงอัตโนมัติแล้ว ตรวจสอบหรือปรับขนาดได้
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button style="flex: 1; background: #F1F5F9; border: 1px solid #CBD5E1; color: #475569; padding: 0.4rem; border-radius: 6px; font-size: 0.75rem; font-family: 'Kanit';">
+                  ตรวจจับใหม่
+                </button>
+                <button style="flex: 1.5; background: #F59E0B; border: none; color: white; padding: 0.4rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; font-family: 'Kanit';">
+                  ยืนยันตำแหน่ง
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 0.75rem; text-align: center;">
+            Flutter UI: Circular CropScreen with 4 Cardinal Handles
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 11: Project Conclusion & Key Achievements -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-11" data-title="สรุปผลงานและประโยชน์ที่ได้รับ">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Conclusion & Achievements</span>
+          <h2 class="slide-title">สรุปผลงานและประโยชน์ที่ได้รับ (Project Conclusion)</h2>
+          <p class="slide-subtitle">การบรรลุเป้าหมายทางวิศวกรรม นวัตกรรมที่เกิดขึ้น และผลกระทบต่ออุตสาหกรรม</p>
+        </div>
+        <div class="slide-num-pill">11 / 12</div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom: 1.5rem;">
+        <div class="card card-accent">
+          <div class="card-title" style="color: #D97706;">
+            <span>🎯</span> ความแม่นยำสูง (High Accuracy)
+          </div>
+          <p style="font-size: 0.95rem; color: #78350F; line-height: 1.6;">
+            โมเดล SVR (RBF Kernel) บรรลุค่า <strong>R² = 0.9185</strong> และค่าความคลาดเคลื่อนเฉลี่ย <strong>MAE = 0.6403</strong> ระดับสี มีความแม่นยำในกรอบ ±1 ระดับสูงถึง <strong>92.7%</strong> เหนือกว่าการประเมินด้วยสายตามนุษย์ทั่วไป
+          </p>
+        </div>
+
+        <div class="card card-green">
+          <div class="card-title" style="color: #065F46;">
+            <span>⚡</span> รวดเร็วและเสถียร (Zero Latency)
+          </div>
+          <p style="font-size: 0.95rem; color: #065F46; line-height: 1.6;">
+            ทำงานแบบ <strong>100% On-Device</strong> ไม่ต้องมีเซิร์ฟเวอร์หลังบ้านหรือสัญญาณอินเทอร์เน็ต ขนาดโมเดลเล็กเพียง <strong>107 KB</strong> ประมวลผลเสร็จในเสี้ยววินาที รองรับการใช้งานจริงในฟาร์มที่ห่างไกล
+          </p>
+        </div>
+
+        <div class="card card-purple">
+          <div class="card-title" style="color: #5B21B6;">
+            <span>🛡️</span> ทนทานต่อสิ่งรบกวน (Robustness)
+          </div>
+          <p style="font-size: 0.95rem; color: #5B21B6; line-height: 1.6;">
+            ขจัดแสงสะท้อนขอบด้วย <strong>Center Circular Mask 42%</strong> และแยกแครอทหรือวัตถุแปลกปลอมด้วย <strong>Connected Components</strong> ได้อย่างมีเสถียรภาพและแม่นยำ 100%
+          </p>
+        </div>
+      </div>
+
+      <!-- Impact Summary Table -->
+      <div class="card" style="padding: 1.25rem;">
+        <div class="card-title" style="color: #0F172A; margin-bottom: 0.5rem;">
+          <span>🚀</span> สรุปเปรียบเทียบผลกระทบทางธุรกิจและเทคโนโลยี
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>หัวข้อเปรียบเทียบ</th>
+              <th>การใช้พัดสีกระดาษ DSM เดิม</th>
+              <th>เครื่องวัดสีห้องแล็บ (Colorimeter)</th>
+              <th>แอปพลิเคชัน Egg Yolk AI (ของเรา) 🏆</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>ต้นทุนต่อเครื่อง</strong></td>
+              <td>~1,500 – 3,000 บาท (เสื่อมสภาพตามเวลา)</td>
+              <td>150,000 – 300,000 บาท</td>
+              <td><span class="badge-win">0 บาท (ใช้สมาร์ตโฟนที่มีอยู่แล้ว)</span></td>
+            </tr>
+            <tr>
+              <td><strong>ความแม่นยำและเที่ยงตรง</strong></td>
+              <td>ต่ำ (ขึ้นกับสายตามนุษย์และสภาพแสง)</td>
+              <td>สูงมากในห้องทดลองควบคุม</td>
+              <td><strong>สูงสม่ำเสมอระดับดิจิทัล (R² = 0.9185)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>การบันทึกประวัติข้อมูล</strong></td>
+              <td>ต้องจดมือลงสมุด โอกาสสูญหายสูง</td>
+              <td>เชื่อมสายคอมพิวเตอร์ ยุ่งยาก</td>
+              <td><strong>บันทึกประวัติลงเครื่องได้ทันที</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SLIDE 12: Thesis Defense Q&A Preparation -->
+    <!-- ================================================================= -->
+    <section class="slide" id="slide-12" data-title="แนวทางตอบคำถามสอบป้องกันปริญญานิพนธ์">
+      <div class="slide-header">
+        <div>
+          <span class="slide-tag">Thesis Defense Q&A</span>
+          <h2 class="slide-title">แนวทางการตอบข้อซักถามของกรรมการสอบ (Thesis Defense Q&A)</h2>
+          <p class="slide-subtitle">คำถามเชิงเทคนิคยอดฮิต พร้อมหลักการวิศวกรรมที่ใช้ยืนยันความถูกต้อง</p>
+        </div>
+        <div class="slide-num-pill">12 / 12</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        
+        <!-- Q1 -->
+        <div class="card" style="border-left: 4px solid var(--primary);">
+          <div style="font-weight: 700; color: #0F172A; font-size: 1rem; margin-bottom: 0.35rem;">
+            ❓ Q1: ทำไมถึงเลือกใช้ HSV Color Masking แทนที่จะใช้ Deep Learning (เช่น YOLOv8) ในการตรวจจับไข่แดง?
+          </div>
+          <div style="font-size: 0.9rem; color: #334155; line-height: 1.6;">
+            <strong>คำตอบ:</strong> ตอบด้วยหลัก <em>Occam's Razor</em> ครับ ไข่แดงมีเอกลักษณ์สีสด (Saturation &ge; 0.25) ในช่วง Hue สีส้มชัดเจน การใช้ Deep Learning จะเพิ่มขนาดแอป 20–30 MB และใช้เวลาประมวลผล 200ms ในขณะที่ HSV ใช้สมการคำนวณเบาขนาด 0 MB และเร็วเพียง 10ms นอกจากนี้ระบบของเราได้บันทึกไฟล์ Label Bounding Box มาตรฐาน YOLO ไว้พร้อมทุกรูป ทำให้สามารถส่งต่อไป Train YOLO ได้ทันทีในอนาคตครับ
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="card" style="border-left: 4px solid var(--secondary);">
+          <div style="font-weight: 700; color: #0F172A; font-size: 1rem; margin-bottom: 0.35rem;">
+            ❓ Q2: หากในจานมีวัตถุสีส้มอื่น เช่น ชิ้นแครอท ระบบจะตัดภาพผิดพลาดหรือไม่?
+          </div>
+          <div style="font-size: 0.9rem; color: #334155; line-height: 1.6;">
+            <strong>คำตอบ:</strong> ไม่ผิดพลาดครับ เพราะเรามีระบบ <em>Connected Component Analysis</em> สแกนแยกก้อนวัตถุและเลือกเฉพาะก้อนที่มีพื้นที่ (Area) ใหญ่ที่สุด ซึ่งไข่แดงมีขนาดเฉลี่ย ~11,975 พิกเซล ในขณะที่ชิ้นแครอทมีขนาดเพียง ~1,329 พิกเซล ระบบจึงเลือกตีกรอบเฉพาะก้อนไข่แดงและตัดแครอททิ้งไป 100% ครับ
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="card" style="border-left: 4px solid var(--success);">
+          <div style="font-weight: 700; color: #0F172A; font-size: 1rem; margin-bottom: 0.35rem;">
+            ❓ Q3: ทำไมหลังจากตีกรอบสี่เหลี่ยมแล้ว ยังต้องเจาะวงกลม Center Circular Mask 42% อีกรอบ?
+          </div>
+          <div style="font-size: 0.9rem; color: #334155; line-height: 1.6;">
+            <strong>คำตอบ:</strong> เพราะภาพถ่ายเป็นสี่เหลี่ยมแต่ไข่แดงเป็นวงกลมครับ มุมทั้ง 4 ของภาพจะมีเศษไข่ขาวหรือขอบจานติดมาด้วยเสมอ นอกจากนี้บริเวณขอบนอกของไข่แดงจะมีความโค้งนูนและสะท้อนแสงไฟนีออน (Specular Highlights) การเจาะเฉพาะรัศมี 42% ตรงกลาง จะรับประกันว่าเราได้ดึงเฉพาะ <em>เนื้อไข่แดงแท้ที่มีความสม่ำเสมอสูงสุด</em> ครับ
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="card" style="border-left: 4px solid var(--accent);">
+          <div style="font-weight: 700; color: #0F172A; font-size: 1rem; margin-bottom: 0.35rem;">
+            ❓ Q4: การคำนวณสูตรคณิตศาสตร์ SVR บน Dart มือถือ ได้ผลลัพธ์ตรงกับ Python ในคอมพิวเตอร์จริงหรือ?
+          </div>
+          <div style="font-size: 0.9rem; color: #334155; line-height: 1.6;">
+            <strong>คำตอบ:</strong> ตรงกันเป๊ะ 100% ครับ เราได้ทำการทดสอบ <em>Numerical Parity Check</em> โดยป้อนชุดข้อมูลเดียวกันเข้า Scikit-Learn (Python) และ Pure Dart Math ผลลัพธ์ที่ได้มีค่าความต่างเฉลี่ย |Δ| = 2.0 × 10⁻¹³ (ตรงกันถึงทศนิยมตำแหน่งที่ 13) และผ่านชุดทดสอบทั้ง 4 การทดสอบ (Test A ถึง Test D) เรียบร้อยแล้วครับ
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Sticky Action Bar -->
+  <footer class="bottom-bar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <button class="nav-btn" id="btnPrev" title="สไลด์ก่อนหน้า (กด ลูกศรซ้าย ←)">
+        <span>←</span> ก่อนหน้า
+      </button>
+      <button class="nav-btn" id="btnNext" title="สไลด์ถัดไป (กด ลูกศรขวา → หรือ Space)">
+        ถัดไป <span>→</span>
+      </button>
+    </div>
+
+    <!-- Progress Indicator Bar -->
+    <div class="progress-bar-container" id="progressContainer" title="คลิกเพื่อเลื่อนไปยังสไลด์ที่ต้องการ">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div class="slide-counter" id="slideCounter">1 / 12</div>
+      <button class="btn-icon" id="btnHelp" title="คีย์ลัดคีย์บอร์ด">
+        <span>⌨️</span> คีย์ลัด
+      </button>
+    </div>
+  </footer>
+
+  <!-- Overview Grid Modal -->
+  <div class="overview-modal" id="overviewModal">
+    <div style="max-width: 1200px; margin: 0 auto 1.5rem auto; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="color: white; font-size: 1.5rem;">🗂️ ภาพรวมสไลด์นำเสนอทั้งหมด (12 สไลด์)</h3>
+      <button class="btn-icon" id="btnCloseOverview" style="background: rgba(255,255,255,0.15);">
+        ✕ ปิดหน้าต่าง (Esc)
+      </button>
+    </div>
+    <div class="overview-grid" id="overviewGrid">
+      <!-- Grid items will be dynamically generated or filled by JS -->
+    </div>
+  </div>
+
+  <!-- JavaScript Engine for Slide Presentation -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progressBar');
+    const slideCounter = document.getElementById('slideCounter');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const overviewModal = document.getElementById('overviewModal');
+    const overviewGrid = document.getElementById('overviewGrid');
+    const btnOverview = document.getElementById('btnOverview');
+    const btnCloseOverview = document.getElementById('btnCloseOverview');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const btnMode = document.getElementById('btnMode');
+    const progressContainer = document.getElementById('progressContainer');
+
+    // Initialize Overview Grid
+    function buildOverviewGrid() {
+      overviewGrid.innerHTML = '';
+      slides.forEach((slide, index) => {
+        const slideNum = index + 1;
+        const title = slide.getAttribute('data-title') || `Slide ${slideNum}`;
+        const subtitle = slide.querySelector('.slide-subtitle')?.innerText || 'รายละเอียดสไลด์';
+
+        const card = document.createElement('div');
+        card.className = `overview-card ${slideNum === currentSlide ? 'current' : ''}`;
+        card.innerHTML = `
+          <div class="overview-num">${slideNum} / ${totalSlides}</div>
+          <div class="overview-title">${title}</div>
+          <div class="overview-subtitle">${subtitle}</div>
+        `;
+        card.addEventListener('click', () => {
+          goToSlide(slideNum);
+          closeOverview();
+        });
+        overviewGrid.appendChild(card);
+      });
+    }
+
+    // Update Slide Display
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        if (index + 1 === currentSlide) {
+          slide.classList.add('active');
+          slide.scrollTop = 0;
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      // Update UI Controls
+      const progressPercent = (currentSlide / totalSlides) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+      slideCounter.innerText = `${currentSlide} / ${totalSlides}`;
+
+      btnPrev.disabled = (currentSlide === 1);
+      btnNext.disabled = (currentSlide === totalSlides);
+
+      // Update current in overview if open
+      document.querySelectorAll('.overview-card').forEach((card, idx) => {
+        if (idx + 1 === currentSlide) {
+          card.classList.add('current');
+        } else {
+          card.classList.remove('current');
+        }
+      });
+    }
+
+    function goToSlide(n) {
+      if (n >= 1 && n <= totalSlides) {
+        currentSlide = n;
+        updateSlide();
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function openOverview() {
+      buildOverviewGrid();
+      overviewModal.classList.add('active');
+    }
+
+    function closeOverview() {
+      overviewModal.classList.remove('active');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => alert(`Error: ${err.message}`));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle('scroll-mode');
+      const isScroll = document.body.classList.contains('scroll-mode');
+      btnMode.classList.toggle('active', isScroll);
+      btnMode.innerHTML = isScroll ? '<span>🎦</span> โหมดสไลด์' : '<span>📑</span> โหมดเอกสาร';
+    }
+
+    // Event Listeners
+    btnNext.addEventListener('click', nextSlide);
+    btnPrev.addEventListener('click', prevSlide);
+    btnOverview.addEventListener('click', openOverview);
+    btnCloseOverview.addEventListener('click', closeOverview);
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    btnMode.addEventListener('click', toggleMode);
+
+    progressContainer.addEventListener('click', (e) => {
+      const rect = progressContainer.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const ratio = clickX / rect.width;
+      const targetSlide = Math.min(totalSlides, Math.max(1, Math.ceil(ratio * totalSlides)));
+      goToSlide(targetSlide);
+    });
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (document.body.classList.contains('scroll-mode')) return;
+
+      if (overviewModal.classList.contains('active')) {
+        if (e.key === 'Escape') closeOverview();
+        return;
+      }
+
+      switch(e.key) {
+        case 'ArrowRight':
+        case 'PageDown':
+        case ' ':
+          e.preventDefault();
+          nextSlide();
+          break;
+        case 'ArrowLeft':
+        case 'PageUp':
+          e.preventDefault();
+          prevSlide();
+          break;
+        case 'Home':
+          e.preventDefault();
+          goToSlide(1);
+          break;
+        case 'End':
+          e.preventDefault();
+          goToSlide(totalSlides);
+          break;
+        case 'f':
+        case 'F':
+          toggleFullscreen();
+          break;
+        case 'o':
+        case 'O':
+          openOverview();
+          break;
+        case 'm':
+        case 'M':
+          toggleMode();
+          break;
+        case 'Escape':
+          closeOverview();
+          break;
+      }
+    });
+
+    document.getElementById('btnHelp').addEventListener('click', () => {
+      alert(
+        "⌨️ คีย์ลัดสำหรับการนำเสนอ:\n\n" +
+        "• ถัดไป: ลูกศรขวา (→), Spacebar หรือ Page Down\n" +
+        "• ย้อนกลับ: ลูกศรซ้าย (←) หรือ Page Up\n" +
+        "• เต็มจอ: กด F\n" +
+        "• ดูภาพรวมสไลด์ทั้งหมด: กด O\n" +
+        "• สลับโหมดนำเสนอ / โหมดเอกสารอ่านยาว: กด M\n" +
+        "• ไปสไลด์แรก / สไลด์สุดท้าย: กด Home / End"
+      );
+    });
+
+    // Initial setup
+    updateSlide();
+  </script>
+</body>
+</html>

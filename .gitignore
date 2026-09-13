@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Flutter / Dart
+build/
+.dart_tool/
+egg_yolk_app/build/
+egg_yolk_app/.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 ML Pipeline Tutorial — Egg Yolk Color Prediction</title>
+<style>
+  :root {
+    --bg: #0f0f1a; --surface: #1a1a2e; --card: #1e1e32;
+    --accent: #ffa726; --accent2: #ff7043; --accent3: #66bb6a;
+    --text: #e0e0e0; --muted: #9e9e9e; --code-bg: #12121f;
+    --line-hl: rgba(255,167,38,0.08); --border: #2a2a40;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI','Kanit',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
+
+  /* ── NAV ── */
+  .topnav { position:sticky; top:0; z-index:100; background:var(--surface); border-bottom:1px solid var(--border); padding:12px 24px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .topnav h1 { font-size:1.2rem; color:var(--accent); white-space:nowrap; }
+  .topnav a { color:var(--muted); text-decoration:none; font-size:.85rem; padding:4px 10px; border-radius:6px; transition:.2s; white-space:nowrap; }
+  .topnav a:hover, .topnav a.active { color:#fff; background:rgba(255,167,38,.15); }
+
+  /* ── LAYOUT ── */
+  .container { max-width:1100px; margin:0 auto; padding:24px 20px 80px; }
+  section { margin-bottom:56px; scroll-margin-top:70px; }
+
+  /* ── HEADINGS ── */
+  h2 { font-size:1.6rem; color:var(--accent); margin-bottom:8px; padding-bottom:8px; border-bottom:2px solid var(--border); }
+  h2 .step-badge { display:inline-block; background:var(--accent); color:#000; font-size:.75rem; font-weight:800; padding:2px 10px; border-radius:12px; margin-right:8px; vertical-align:middle; }
+  h3 { font-size:1.15rem; color:var(--accent2); margin:28px 0 10px; }
+  h4 { font-size:1rem; color:var(--accent3); margin:20px 0 8px; }
+
+  /* ── TEXT ── */
+  p { margin:8px 0; }
+  .intro-box { background:var(--card); padding:20px 24px; border-radius:12px; border-left:4px solid var(--accent); margin:16px 0 24px; }
+  .key-concept { background:linear-gradient(135deg,#1a237e22,#0d47a122); border:1px solid #1565c044; padding:16px 20px; border-radius:10px; margin:12px 0; }
+  .key-concept strong { color:#42a5f5; }
+  .warn-box { background:linear-gradient(135deg,#e6510022,#bf360c22); border:1px solid #e6510044; padding:14px 18px; border-radius:10px; margin:12px 0; }
+  .warn-box strong { color:#ff8a65; }
+  .success-box { background:linear-gradient(135deg,#1b5e2022,#2e7d3222); border:1px solid #43a04766; padding:14px 18px; border-radius:10px; margin:12px 0; }
+  .success-box strong { color:#81c784; }
+
+  /* ── CODE BLOCK ── */
+  .code-section { margin:16px 0; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .code-header { background:var(--surface); padding:8px 16px; font-size:.8rem; color:var(--accent); display:flex; justify-content:space-between; align-items:center; }
+  .code-header .filename { font-weight:700; }
+  pre { background:var(--code-bg); padding:16px; overflow-x:auto; font-size:.82rem; line-height:1.65; }
+  code { font-family:'Cascadia Code','Fira Code','Consolas',monospace; }
+  .line { display:block; padding:0 8px; }
+  .line:hover { background:var(--line-hl); }
+  .line-num { display:inline-block; width:32px; color:#555; text-align:right; margin-right:16px; user-select:none; }
+
+  /* SYNTAX COLORS */
+  .kw { color:#c792ea; }          /* keyword */
+  .fn { color:#82aaff; }          /* function */
+  .st { color:#c3e88d; }          /* string */
+  .cm { color:#546e7a; font-style:italic; } /* comment */
+  .num { color:#f78c6c; }         /* number */
+  .op { color:#89ddff; }          /* operator */
+  .var { color:#e0e0e0; }         /* variable */
+  .dec { color:#ffcb6b; }         /* decorator/class */
+  .bi { color:#82aaff; }          /* built-in */
+
+  /* ── ANNOTATION ── */
+  .ann { display:block; background:rgba(255,167,38,0.06); border-left:3px solid var(--accent); padding:10px 16px; margin:4px 0 4px 48px; border-radius:0 8px 8px 0; font-size:.84rem; color:#ccc; }
+  .ann::before { content:'💡 '; }
+  .ann-warn { border-left-color:var(--accent2); background:rgba(255,112,67,.06); }
+  .ann-warn::before { content:'⚠️ '; }
+  .ann-math { border-left-color:#7c4dff; background:rgba(124,77,255,.06); }
+  .ann-math::before { content:'📐 '; }
+
+  /* ── DIAGRAM ── */
+  .diagram { background:var(--card); padding:24px; border-radius:12px; margin:20px 0; text-align:center; overflow-x:auto; }
+  .flow { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; font-size:.85rem; }
+  .flow-box { background:var(--surface); border:1px solid var(--accent); padding:10px 16px; border-radius:8px; color:var(--accent); font-weight:600; min-width:100px; }
+  .flow-arrow { color:var(--accent); font-size:1.3rem; }
+  .flow-box.active { background:var(--accent); color:#000; }
+  .flow-box.done { border-color:var(--accent3); color:var(--accent3); }
+
+  /* ── TABLE ── */
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:.85rem; }
+  th { background:var(--surface); color:var(--accent); padding:10px 12px; text-align:left; border-bottom:2px solid var(--border); }
+  td { padding:8px 12px; border-bottom:1px solid var(--border); }
+  tr:hover td { background:rgba(255,255,255,.02); }
+
+  /* ── TOC ── */
+  .toc { background:var(--card); padding:20px 28px; border-radius:12px; margin:20px 0; }
+  .toc-title { font-size:1.1rem; color:var(--accent); margin-bottom:12px; font-weight:700; }
+  .toc ol { padding-left:20px; }
+  .toc li { margin:6px 0; }
+  .toc a { color:var(--text); text-decoration:none; }
+  .toc a:hover { color:var(--accent); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:700px) {
+    .topnav { flex-direction:column; align-items:flex-start; }
+    pre { font-size:.75rem; }
+    .ann { margin-left:16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ TOP NAV ═══════════════════ -->
+<nav class="topnav">
+  <h1>🧠 ML Pipeline Tutorial</h1>
+  <a href="#overview">ภาพรวม</a>
+  <a href="#step0">ไฟล์ color_service</a>
+  <a href="#step1">Step 1: Auto-Crop</a>
+  <a href="#step2">Step 2: Features</a>
+  <a href="#step3">Step 3: Train</a>
+  <a href="#step4">Step 4: Export</a>
+  <a href="#summary">สรุปทบทวน</a>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════ OVERVIEW ═══════════════════ -->
+<section id="overview">
+<h2>📋 ภาพรวม Machine Learning Pipeline</h2>
+
+<div class="intro-box">
+  <p>โปรเจกต์นี้สร้างระบบ AI เพื่อ<strong>ประเมินสีไข่แดงอัตโนมัติ</strong>ตามมาตรฐาน DSM Yolk Color Fan (ระดับ 1–15) โดยใช้<strong>ภาพถ่ายไข่แดง</strong>เป็น input และส่ง output เป็นคะแนน 1–15</p>
+  <p>Pipeline ประกอบด้วย <strong>4 ขั้นตอน + 1 โมดูลแกนกลาง</strong></p>
+</div>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="flow-box">📸 ภาพดิบ<br><small>raw_images/</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">🔪 Step 1<br><small>batch_auto_crop.py</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">🎨 Step 2<br><small>build_features.py</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">🏋️ Step 3<br><small>train_compare.py</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">📦 Step 4<br><small>export_model.py</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box active">📱 App<br><small>model_weights.json</small></div>
+  </div>
+  <p style="margin-top:12px;color:var(--muted);font-size:.8rem;">โมดูล <code>color_service.py</code> ถูกใช้ร่วมกันใน Step 1, 2, และ API Backend</p>
+</div>
+
+<div class="toc">
+  <div class="toc-title">📖 สารบัญ</div>
+  <ol>
+    <li><a href="#step0">โมดูลแกนกลาง: <code>color_service.py</code> — สกัดสีและแปลงปริภูมิสี</a></li>
+    <li><a href="#step1">Step 1: <code>batch_auto_crop.py</code> — ตรวจจับและครอบตัดไข่แดงอัตโนมัติ</a></li>
+    <li><a href="#step2">Step 2: <code>build_features.py</code> — สร้างตาราง Features สำหรับเทรนโมเดล</a></li>
+    <li><a href="#step3">Step 3: <code>train_compare_models.py</code> — แข่งขัน 5 โมเดล ML</a></li>
+    <li><a href="#step4">Step 4: <code>export_best_model.py</code> — ส่งออกโมเดลไปใช้จริง</a></li>
+    <li><a href="#summary">สรุปทบทวนทั้งหมด</a></li>
+  </ol>
+</div>
+</section>
+
+
+<!-- ═══════════════════ COLOR SERVICE ═══════════════════ -->
+<section id="step0">
+<h2><span class="step-badge">CORE</span> color_service.py — โมดูลแกนกลางสกัดสี</h2>
+
+<div class="intro-box">
+  <p>ไฟล์นี้คือ <strong>"หัวใจ"</strong> ของทั้งโปรเจกต์ ถูกเรียกใช้ทั้งใน <code>build_features.py</code> (เทรน) และ <code>egg_api/</code> (API Backend) มีหน้าที่หลัก 3 อย่าง:</p>
+  <ol>
+    <li><strong>auto_crop_yolk()</strong> — ตรวจจับไข่แดงด้วย OpenCV HSV</li>
+    <li><strong>extract_mean_rgb()</strong> — สกัดค่าสี RGB เฉลี่ยจากวงกลม 42%</li>
+    <li><strong>rgb_to_cielab()</strong> — แปลง RGB → CIELAB (D65)</li>
+  </ol>
+</div>
+
+<!-- ColorFeatureList -->
+<h3>🔧 ส่วนที่ 1: ColorFeatureList — โครงสร้างข้อมูลแบบ Dual-Access</h3>
+<div class="code-section">
+<div class="code-header"><span class="filename">color_service.py</span><span>บรรทัด 16–35</span></div>
+<pre><code><span class="line"><span class="line-num">16</span><span class="kw">class</span> <span class="dec">ColorFeatureList</span>(<span class="bi">list</span>):</span>
+<span class="line"><span class="line-num">17</span>    <span class="st">"""</span></span>
+<span class="line"><span class="line-num">18</span>    <span class="st">List subclass containing [mean_R, mean_G, mean_B, L*, a*, b*]</span></span>
+<span class="line"><span class="line-num">19</span>    <span class="st">with support for dictionary-style key lookups.</span></span>
+<span class="line"><span class="line-num">20</span>    <span class="st">"""</span></span>
+<span class="line"><span class="line-num">21</span>    _KEY_MAP = {</span>
+<span class="line"><span class="line-num">22</span>        <span class="st">'r'</span>: <span class="num">0</span>, <span class="st">'mean_r'</span>: <span class="num">0</span>, <span class="st">'R'</span>: <span class="num">0</span>,</span>
+<span class="line"><span class="line-num">23</span>        <span class="st">'g'</span>: <span class="num">1</span>, <span class="st">'mean_g'</span>: <span class="num">1</span>, <span class="st">'G'</span>: <span class="num">1</span>,</span>
+<span class="line"><span class="line-num">24</span>        <span class="st">'b'</span>: <span class="num">2</span>, <span class="st">'mean_b'</span>: <span class="num">2</span>, <span class="st">'B'</span>: <span class="num">2</span>,</span>
+<span class="line"><span class="line-num">25</span>        <span class="st">'l'</span>: <span class="num">3</span>, <span class="st">'L'</span>: <span class="num">3</span>,</span>
+<span class="line"><span class="line-num">26</span>        <span class="st">'a'</span>: <span class="num">4</span>, <span class="st">'A'</span>: <span class="num">4</span>,</span>
+<span class="line"><span class="line-num">27</span>        <span class="st">'b_lab'</span>: <span class="num">5</span>, <span class="st">'b*'</span>: <span class="num">5</span>,</span>
+<span class="line"><span class="line-num">28</span>    }</span>
+<span class="line"><span class="line-num">30</span>    <span class="kw">def</span> <span class="fn">__getitem__</span>(self, item):</span>
+<span class="line"><span class="line-num">31</span>        <span class="kw">if</span> <span class="bi">isinstance</span>(item, <span class="bi">str</span>):</span>
+<span class="line"><span class="line-num">32</span>            <span class="kw">if</span> item <span class="kw">in</span> self._KEY_MAP:</span>
+<span class="line"><span class="line-num">33</span>                <span class="kw">return</span> <span class="bi">super</span>().__getitem__(self._KEY_MAP[item])</span>
+<span class="line"><span class="line-num">34</span>            <span class="kw">raise</span> <span class="dec">KeyError</span>(<span class="st">f"Key '{item}' not recognized"</span>)</span>
+<span class="line"><span class="line-num">35</span>        <span class="kw">return</span> <span class="bi">super</span>().__getitem__(item)</span>
+</code></pre>
+</div>
+<span class="ann">สร้าง <strong>list แบบพิเศษ</strong> ที่เข้าถึงได้ทั้ง index (เช่น <code>feats[0]</code>) และ key (เช่น <code>feats['r']</code>) — ช่วยให้โค้ดที่เรียกใช้อ่านง่ายและยืดหยุ่นกว่า dict ธรรมดา</span>
+
+<!-- extract_mean_rgb -->
+<h3>🎨 ส่วนที่ 2: extract_mean_rgb() — สกัดค่าสี RGB จาก Circular Mask 42%</h3>
+
+<div class="key-concept">
+  <strong>ทำไมต้องใช้ Circular Mask 42%?</strong><br>
+  ภาพที่ครอปมาจะเป็นสี่เหลี่ยมจัตุรัส แต่ไข่แดงจริงเป็นวงกลม → มุม 4 มุมของภาพจะมีสีพื้นหลัง/ไข่ขาวปะปน<br>
+  การใช้ <strong>วงกลม 42% ตรงกลาง</strong> จะดึงเฉพาะ "เนื้อไข่แดงบริสุทธิ์" ตรงกลางภาพ ตัดขอบและพื้นหลังทิ้งทั้งหมด
+</div>
+
+<div class="code-section">
+<div class="code-header"><span class="filename">color_service.py</span><span>บรรทัด 112–152</span></div>
+<pre><code><span class="line"><span class="line-num">112</span><span class="kw">def</span> <span class="fn">extract_mean_rgb</span>(image_input):</span>
+<span class="line"><span class="line-num">130</span>    img_rgb = img.convert(<span class="st">'RGB'</span>)</span>
+<span class="line"><span class="line-num">131</span>    np_img = np.array(img_rgb)        <span class="cm"># แปลง PIL Image → NumPy array 3 มิติ [H, W, 3]</span></span>
+<span class="line"><span class="line-num">133</span>    h, w, _ = np_img.shape</span>
+<span class="line"><span class="line-num">134</span>    cy, cx = h // <span class="num">2</span>, w // <span class="num">2</span>          <span class="cm"># หาจุดกลางภาพ</span></span>
+<span class="line"><span class="line-num">135</span>    radius = <span class="bi">int</span>(<span class="bi">min</span>(h, w) * <span class="num">0.42</span>)  <span class="cm"># รัศมี = 42% ของด้านที่สั้นกว่า</span></span>
+<span class="line"><span class="line-num">136</span>    y_coords, x_coords = np.ogrid[:h, :w]  <span class="cm"># สร้าง grid พิกัด</span></span>
+<span class="line"><span class="line-num">137</span>    mask = (x_coords - cx)**<span class="num">2</span> + (y_coords - cy)**<span class="num">2</span> &lt;= radius**<span class="num">2</span></span>
+</code></pre>
+</div>
+<span class="ann ann-math"><strong>สมการวงกลม:</strong> <code>(x - cx)² + (y - cy)² ≤ r²</code> → สร้าง boolean mask รูปวงกลม — pixel ที่อยู่ในวงกลมจะเป็น True ที่เหลือเป็น False</span>
+
+<div class="code-section">
+<div class="code-header"><span class="filename">color_service.py</span><span>บรรทัด 143–152</span></div>
+<pre><code><span class="line"><span class="line-num">143</span>        mean_r = <span class="bi">float</span>(np.mean(np_img[:, :, <span class="num">0</span>][mask]))  <span class="cm"># ค่าเฉลี่ย R ของ pixel ในวงกลม</span></span>
+<span class="line"><span class="line-num">144</span>        mean_g = <span class="bi">float</span>(np.mean(np_img[:, :, <span class="num">1</span>][mask]))  <span class="cm"># ค่าเฉลี่ย G ของ pixel ในวงกลม</span></span>
+<span class="line"><span class="line-num">145</span>        mean_b = <span class="bi">float</span>(np.mean(np_img[:, :, <span class="num">2</span>][mask]))  <span class="cm"># ค่าเฉลี่ย B ของ pixel ในวงกลม</span></span>
+<span class="line"><span class="line-num">148</span>    <span class="kw">return</span> {<span class="st">'r'</span>: <span class="bi">round</span>(mean_r, <span class="num">2</span>), <span class="st">'g'</span>: <span class="bi">round</span>(mean_g, <span class="num">2</span>), <span class="st">'b'</span>: <span class="bi">round</span>(mean_b, <span class="num">2</span>)}</span>
+</code></pre>
+</div>
+<span class="ann"><code>np_img[:, :, 0][mask]</code> → เลือก channel R ของเฉพาะ pixel ที่ mask เป็น True แล้วคำนวณค่าเฉลี่ย — ได้ค่า "สีแดงเฉลี่ยของเนื้อไข่แดง"</span>
+
+<!-- rgb_to_cielab -->
+<h3>🔬 ส่วนที่ 3: rgb_to_cielab() — แปลง RGB → CIELAB (D65)</h3>
+
+<div class="key-concept">
+  <strong>ทำไมต้องแปลงเป็น CIELAB?</strong><br>
+  ปริภูมิสี RGB เป็น device-dependent (สีจะดูต่างกันบนจอต่างชนิด) แต่ <strong>CIELAB</strong> เป็น perceptually uniform — ระยะห่างของเลขตรงกับสิ่งที่ตามนุษย์เห็น<br>
+  <code>L*</code> = ความสว่าง (0–100), <code>a*</code> = แดง-เขียว, <code>b*</code> = เหลือง-น้ำเงิน
+</div>
+
+<div class="code-section">
+<div class="code-header"><span class="filename">color_service.py</span><span>บรรทัด 155–171</span></div>
+<pre><code><span class="line"><span class="line-num">155</span><span class="kw">def</span> <span class="fn">rgb_to_cielab</span>(r, g, b):</span>
+<span class="line"><span class="line-num">164</span>    rgb_norm = np.array([[[r / <span class="num">255.0</span>, g / <span class="num">255.0</span>, b / <span class="num">255.0</span>]]], dtype=np.float64)</span>
+<span class="line"><span class="line-num">165</span>    lab_arr = rgb2lab(rgb_norm)[<span class="num">0</span>, <span class="num">0</span>]  <span class="cm"># ใช้ scikit-image แปลง</span></span>
+<span class="line"><span class="line-num">167</span>    <span class="kw">return</span> {</span>
+<span class="line"><span class="line-num">168</span>        <span class="st">'l'</span>: <span class="bi">round</span>(<span class="bi">float</span>(lab_arr[<span class="num">0</span>]), <span class="num">2</span>),   <span class="cm"># L* ความสว่าง</span></span>
+<span class="line"><span class="line-num">169</span>        <span class="st">'a'</span>: <span class="bi">round</span>(<span class="bi">float</span>(lab_arr[<span class="num">1</span>]), <span class="num">2</span>),   <span class="cm"># a* แดง-เขียว</span></span>
+<span class="line"><span class="line-num">170</span>        <span class="st">'b'</span>: <span class="bi">round</span>(<span class="bi">float</span>(lab_arr[<span class="num">2</span>]), <span class="num">2</span>)    <span class="cm"># b* เหลือง-น้ำเงิน</span></span>
+<span class="line"><span class="line-num">171</span>    }</span>
+</code></pre>
+</div>
+<span class="ann ann-math"><strong>ทำไมใช้ <code>rgb2lab</code> จาก scikit-image?</strong> เพราะใช้ D65 illuminant (แสงกลางวัน) ซึ่งเป็นมาตรฐาน ISO และ CIE — ฟังก์ชันนี้ทำ sRGB → Linear RGB → XYZ → CIELAB ให้อัตโนมัติ</span>
+
+<!-- extract_color_features -->
+<h3>🎯 ส่วนที่ 4: extract_color_features() — ประกอบร่างทุกอย่าง</h3>
+<div class="code-section">
+<div class="code-header"><span class="filename">color_service.py</span><span>บรรทัด 174–191</span></div>
+<pre><code><span class="line"><span class="line-num">174</span><span class="kw">def</span> <span class="fn">extract_color_features</span>(image_input):</span>
+<span class="line"><span class="line-num">182</span>    rgb = extract_mean_rgb(image_input)  <span class="cm"># ขั้นที่ 1: ดึงค่าสี RGB เฉลี่ย</span></span>
+<span class="line"><span class="line-num">183</span>    lab = rgb_to_cielab(rgb[<span class="st">'r'</span>], rgb[<span class="st">'g'</span>], rgb[<span class="st">'b'</span>])  <span class="cm"># ขั้นที่ 2: แปลงเป็น CIELAB</span></span>
+<span class="line"><span class="line-num">184</span>    <span class="kw">return</span> ColorFeatureList([</span>
+<span class="line"><span class="line-num">185</span>        rgb[<span class="st">'r'</span>], rgb[<span class="st">'g'</span>], rgb[<span class="st">'b'</span>],   <span class="cm"># 3 features RGB</span></span>
+<span class="line"><span class="line-num">188</span>        lab[<span class="st">'l'</span>], lab[<span class="st">'a'</span>], lab[<span class="st">'b'</span>]    <span class="cm"># 3 features CIELAB</span></span>
+<span class="line"><span class="line-num">191</span>    ])  <span class="cm"># รวม 6 features ที่ใช้เทรนโมเดล</span></span>
+</code></pre>
+</div>
+<span class="ann">ฟังก์ชันนี้คือ "main entry point" ที่รวมทุกขั้นตอนเข้าด้วยกัน — รับภาพ → ดึงสี RGB → แปลง CIELAB → คืน 6 ค่า <code>[R, G, B, L*, a*, b*]</code></span>
+</section>
+
+
+<!-- ═══════════════════ STEP 1 ═══════════════════ -->
+<section id="step1">
+<h2><span class="step-badge">STEP 1</span> batch_auto_crop.py — ตรวจจับและครอบตัดไข่แดงอัตโนมัติ</h2>
+
+<div class="intro-box">
+  <p><strong>เป้าหมาย:</strong> รับ<strong>ภาพดิบหลายร้อยภาพ</strong>ที่ถ่ายมาจากสถานที่จริง (มีพื้นหลัง มีจาน มีไข่ขาว) → ตรวจจับว่าไข่แดงอยู่ตรงไหน → ครอบตัดเฉพาะส่วนที่เป็นไข่แดง</p>
+  <p><strong>วิธีรัน:</strong> <code>python batch_auto_crop.py</code></p>
+</div>
+
+<h3>📥 Import และไลบรารีที่ใช้</h3>
+<div class="code-section">
+<div class="code-header"><span class="filename">batch_auto_crop.py</span><span>บรรทัด 8–11</span></div>
+<pre><code><span class="line"><span class="line-num"> 8</span><span class="kw">import</span> os</span>
+<span class="line"><span class="line-num"> 9</span><span class="kw">import</span> numpy <span class="kw">as</span> np</span>
+<span class="line"><span class="line-num">10</span><span class="kw">from</span> PIL <span class="kw">import</span> Image              <span class="cm"># เปิด/บันทึกภาพ</span></span>
+<span class="line"><span class="line-num">11</span><span class="kw">from</span> skimage.color <span class="kw">import</span> rgb2hsv  <span class="cm"># แปลง RGB → HSV</span></span>
+</code></pre>
+</div>
+
+<table>
+  <tr><th>ไลบรารี</th><th>หน้าที่</th></tr>
+  <tr><td><code>PIL (Pillow)</code></td><td>เปิดไฟล์ภาพ, ครอปภาพ, บันทึกภาพ</td></tr>
+  <tr><td><code>numpy</code></td><td>จัดการ pixel data ที่เป็น array ตัวเลข</td></tr>
+  <tr><td><code>skimage.color.rgb2hsv</code></td><td>แปลงสี RGB → HSV เพื่อตรวจจับสีเฉพาะ</td></tr>
+</table>
+
+<h3>🎯 detect_and_crop_yolk() — ฟังก์ชันหลัก</h3>
+
+<h4>ขั้นตอน A: โหลดภาพและแปลง HSV</h4>
+<div class="code-section">
+<div class="code-header"><span class="filename">batch_auto_crop.py</span><span>บรรทัด 25–41</span></div>
+<pre><code><span class="line"><span class="line-num">25</span>    img = Image.open(image_path).convert(<span class="st">'RGB'</span>)</span>
+<span class="line"><span class="line-num">26</span>    arr = np.array(img)           <span class="cm"># PIL Image → numpy array</span></span>
+<span class="line"><span class="line-num">27</span>    h_img, w_img = arr.shape[:<span class="num">2</span>]  <span class="cm"># ความสูง, ความกว้าง</span></span>
+<span class="line"><span class="line-num">29</span>    <span class="cm"># แปลง RGB → HSV (skimage: H = 0–360°, S/V = 0–1)</span></span>
+<span class="line"><span class="line-num">30</span>    hsv = rgb2hsv(arr / <span class="num">255.0</span>)    <span class="cm"># ÷ 255 เพราะ rgb2hsv รับค่า 0–1</span></span>
+<span class="line"><span class="line-num">31</span>    h, s, v = hsv[:,:,<span class="num">0</span>]*<span class="num">360</span>, hsv[:,:,<span class="num">1</span>], hsv[:,:,<span class="num">2</span>]</span>
+<span class="line"><span class="line-num">37</span>    mask = (</span>
+<span class="line"><span class="line-num">38</span>        (h >= <span class="num">20.0</span>) & (h <= <span class="num">56.0</span>) &  <span class="cm"># Hue อยู่ในช่วงสีส้ม-เหลือง</span></span>
+<span class="line"><span class="line-num">39</span>        (s >= <span class="num">0.314</span>) &                <span class="cm"># Saturation สดพอ (ไม่ใช่สีเทา)</span></span>
+<span class="line"><span class="line-num">40</span>        (v >= <span class="num">0.314</span>) & (v <= <span class="num">0.980</span>)  <span class="cm"># Value สว่างพอ (ไม่มืดเกิน/ไม่ overexpose)</span></span>
+<span class="line"><span class="line-num">41</span>    )</span>
+</code></pre>
+</div>
+
+<div class="key-concept">
+  <strong>HSV คืออะไร?</strong><br>
+  <strong>H</strong>ue (สีที่เห็น: 0°=แดง, 30°=ส้ม, 60°=เหลือง) · <strong>S</strong>aturation (ความสด: 0=เทา, 1=สดจัด) · <strong>V</strong>alue (ความสว่าง: 0=ดำ, 1=สว่างสุด)<br>
+  ไข่แดงจะอยู่ใน Hue ≈ 20°–56° (สีส้มถึงเหลืองเข้ม) มีความสดสูง (S ≥ 0.314) และไม่มืดเกิน (V ≥ 0.314)
+</div>
+
+<h4>ขั้นตอน B: หาชิ้นส่วนที่ใหญ่ที่สุด (Largest Blob)</h4>
+<div class="code-section">
+<div class="code-header"><span class="filename">batch_auto_crop.py</span><span>บรรทัด 45–55</span></div>
+<pre><code><span class="line"><span class="line-num">45</span>    <span class="kw">if</span> matched_count > (arr.shape[<span class="num">0</span>] * arr.shape[<span class="num">1</span>] * <span class="num">0.01</span>):</span>
+<span class="line"><span class="line-num">47</span>        <span class="kw">from</span> skimage.measure <span class="kw">import</span> label, regionprops</span>
+<span class="line"><span class="line-num">48</span>        lbl = label(mask)      <span class="cm"># ติดป้ายกลุ่ม pixel ที่ติดกัน (1, 2, 3...)</span></span>
+<span class="line"><span class="line-num">49</span>        props = regionprops(lbl)  <span class="cm"># วัดคุณสมบัติแต่ละกลุ่ม (พื้นที่, centroid, bbox)</span></span>
+<span class="line"><span class="line-num">53</span>            largest = <span class="bi">max</span>(props, key=<span class="kw">lambda</span> p: p.area)  <span class="cm"># เลือกกลุ่มที่ใหญ่สุด = ไข่แดง</span></span>
+<span class="line"><span class="line-num">54</span>            min_y, min_x, max_y, max_x = largest.bbox   <span class="cm"># กรอบสี่เหลี่ยมล้อม</span></span>
+<span class="line"><span class="line-num">55</span>            cy, cx = <span class="bi">int</span>(largest.centroid[<span class="num">0</span>]), <span class="bi">int</span>(largest.centroid[<span class="num">1</span>]) <span class="cm"># จุดศูนย์กลางมวล</span></span>
+</code></pre>
+</div>
+<span class="ann"><code>label(mask)</code> ทำ <strong>Connected Component Labeling</strong> — จับกลุ่ม pixel ที่ติดกันเป็นก้อนเดียว แล้ว <code>regionprops</code> วัดขนาดของแต่ละก้อน เลือกก้อนใหญ่สุดคือไข่แดง (ถ้ามีแครอทหรือสิ่งแปลกปลอมในภาพ จะเป็นก้อนเล็กกว่าเสมอ)</span>
+
+<h4>ขั้นตอน C: ครอบตัดเป็นสี่เหลี่ยมจัตุรัส</h4>
+<div class="code-section">
+<div class="code-header"><span class="filename">batch_auto_crop.py</span><span>บรรทัด 66–90</span></div>
+<pre><code><span class="line"><span class="line-num">67</span>            box_size = <span class="bi">int</span>(<span class="bi">max</span>(bbox_w, bbox_h) * (<span class="num">1.0</span> + padding_ratio))</span>
+<span class="line"><span class="line-num">68</span>            half = box_size // <span class="num">2</span></span>
+<span class="line"><span class="line-num">73</span>            cx_clamped = <span class="bi">int</span>(np.clip(cx, half, w_img - half))  <span class="cm"># ดันจุดกลางไม่ให้ล้นขอบ</span></span>
+<span class="line"><span class="line-num">74</span>            cy_clamped = <span class="bi">int</span>(np.clip(cy, half, h_img - half))</span>
+<span class="line"><span class="line-num">76</span>            x1 = cx_clamped - half   <span class="cm"># มุมซ้ายบนของ crop box</span></span>
+<span class="line"><span class="line-num">77</span>            y1 = cy_clamped - half</span>
+<span class="line"><span class="line-num">88</span>            cropped_img = img.crop((x1, y1, x1+actual_size, y1+actual_size))</span>
+</code></pre>
+</div>
+<span class="ann"><code>padding_ratio=0.05</code> คือเผื่อขอบ 5% ไว้รอบๆ ไข่แดง เพื่อไม่ให้ตัดเนื้อไข่แดงหายไป · <code>np.clip(cx, half, w_img - half)</code> คือ clamp ศูนย์กลางไม่ให้ crop box ล้นขอบภาพ ทำให้ไข่แดงอยู่กลาง crop เสมอ</span>
+
+<h4>ขั้นตอน D: Batch Loop ประมวลผลทุกภาพ</h4>
+<div class="code-section">
+<div class="code-header"><span class="filename">batch_auto_crop.py</span><span>บรรทัด 113–158</span></div>
+<pre><code><span class="line"><span class="line-num">113</span><span class="kw">def</span> <span class="fn">run_batch_auto_crop</span>():</span>
+<span class="line"><span class="line-num">114</span>    base_dir = os.path.dirname(__file__)             <span class="cm"># โฟลเดอร์ของสคริปต์นี้</span></span>
+<span class="line"><span class="line-num">115</span>    source_dir = os.path.join(base_dir, <span class="st">'..'</span>, <span class="st">'..'</span>, <span class="st">'pic_egg_yolk'</span>)</span>
+<span class="line"><span class="line-num">116</span>    output_dir = os.path.join(base_dir, <span class="st">'data'</span>, <span class="st">'auto_cropped_dataset'</span>)</span>
+<span class="line"><span class="line-num">130</span>    <span class="kw">for</span> class_name <span class="kw">in</span> class_folders:    <span class="cm"># วนทุก class (class4, class5, ..., class15)</span></span>
+<span class="line"><span class="line-num">138</span>        <span class="kw">for</span> img_file <span class="kw">in</span> images:          <span class="cm"># วนทุกภาพในแต่ละ class</span></span>
+<span class="line"><span class="line-num">144</span>            cropped_img, (yolo_xc, yolo_yc, yolo_w, yolo_h) = detect_and_crop_yolk(src_path)</span>
+<span class="line"><span class="line-num">147</span>            cropped_img.save(out_img_path, quality=<span class="num">95</span>)  <span class="cm"># บันทึกภาพครอป</span></span>
+<span class="line"><span class="line-num">150</span>            <span class="kw">with</span> <span class="bi">open</span>(out_label_path, <span class="st">'w'</span>) <span class="kw">as</span> f:</span>
+<span class="line"><span class="line-num">151</span>                f.write(<span class="st">f"0 {yolo_xc:.6f} {yolo_yc:.6f} ..."</span>)  <span class="cm"># บันทึก YOLO annotation</span></span>
+</code></pre>
+</div>
+<span class="ann"><strong>โครงสร้างโฟลเดอร์:</strong> ภาพดิบอยู่ใน <code>pic_egg_yolk/class4/</code>, <code>class5/</code>, ..., <code>class15/</code> → สคริปต์นี้อ่านทุก class → crop → บันทึกเป็น <code>data/auto_cropped_dataset/class4/</code>, ...</span>
+</section>
+
+
+<!-- ═══════════════════ STEP 2 ═══════════════════ -->
+<section id="step2">
+<h2><span class="step-badge">STEP 2</span> build_features.py — สร้างตาราง Features</h2>
+
+<div class="intro-box">
+  <p><strong>เป้าหมาย:</strong> อ่าน<strong>ภาพที่ครอปแล้ว</strong>จาก Step 1 → สกัดค่าสี 6 ตัว (R,G,B,L*,a*,b*) จากแต่ละภาพ → บันทึกเป็น <code>features.csv</code></p>
+  <p><strong>วิธีรัน:</strong> <code>python build_features.py</code></p>
+</div>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="flow-box done">ภาพ class4_001.jpg</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Circular Mask 42%</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">mean R,G,B</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">RGB → CIELAB</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box active">features.csv<br><small>R,G,B,L*,a*,b*</small></div>
+  </div>
+</div>
+
+<div class="code-section">
+<div class="code-header"><span class="filename">build_features.py</span><span>บรรทัด 12–69</span></div>
+<pre><code><span class="line"><span class="line-num">12</span><span class="kw">def</span> <span class="fn">build_features</span>():</span>
+<span class="line"><span class="line-num">24</span>    class_folders = <span class="bi">sorted</span>(</span>
+<span class="line"><span class="line-num">25</span>        [d <span class="kw">for</span> d <span class="kw">in</span> os.listdir(dataset_dir)  <span class="cm"># หา folder ทั้งหมดที่ชื่อขึ้นต้นด้วย 'class'</span></span>
+<span class="line"><span class="line-num">26</span>         <span class="kw">if</span> d.startswith(<span class="st">'class'</span>)],</span>
+<span class="line"><span class="line-num">27</span>        key=<span class="kw">lambda</span> x: <span class="bi">int</span>(x.replace(<span class="st">'class'</span>,<span class="st">''</span>))  <span class="cm"># sort ตามตัวเลข (4,5,...,15)</span></span>
+<span class="line"><span class="line-num">28</span>    )</span>
+<span class="line"><span class="line-num">36</span>        fan_score = <span class="bi">int</span>(class_folder.replace(<span class="st">'class'</span>,<span class="st">''</span>))  <span class="cm"># class8 → fan_score = 8</span></span>
+<span class="line"><span class="line-num">42</span>        <span class="kw">for</span> img_name <span class="kw">in</span> image_files:</span>
+<span class="line"><span class="line-num">49</span>            <span class="kw">try</span>:</span>
+<span class="line"><span class="line-num">50</span>                features = extract_color_features(img_path)  <span class="cm"># เรียก color_service.py</span></span>
+<span class="line"><span class="line-num">51</span>                labels_data.append({...})   <span class="cm"># บันทึก label</span></span>
+<span class="line"><span class="line-num">56</span>                features_data.append({</span>
+<span class="line"><span class="line-num">59</span>                    <span class="st">'r'</span>: features[<span class="st">'r'</span>], <span class="st">'g'</span>: features[<span class="st">'g'</span>], <span class="st">'b'</span>: features[<span class="st">'b'</span>],</span>
+<span class="line"><span class="line-num">63</span>                    <span class="st">'l'</span>: features[<span class="st">'l'</span>], <span class="st">'a'</span>: features[<span class="st">'a'</span>], <span class="st">'b_lab'</span>: features[<span class="st">'b_lab'</span>]</span>
+<span class="line"><span class="line-num">65</span>                })</span>
+<span class="line"><span class="line-num">67</span>            <span class="kw">except</span> <span class="dec">Exception</span> <span class="kw">as</span> e:</span>
+<span class="line"><span class="line-num">68</span>                <span class="bi">print</span>(<span class="st">f"Skipping {img_name} (error: {e})"</span>)</span>
+</code></pre>
+</div>
+<span class="ann"><strong>จุดสำคัญ:</strong> <code>labels_data.append()</code> อยู่ <strong>ภายใน</strong> <code>try</code> block — ถ้า extraction ล้มเหลว ภาพนั้นจะถูก skip จากทั้ง labels.csv และ features.csv พร้อมกัน เพื่อไม่ให้จำนวนแถวคลาดเคลื่อน</span>
+
+<div class="code-section">
+<div class="code-header"><span class="filename">build_features.py</span><span>บรรทัด 73–80</span></div>
+<pre><code><span class="line"><span class="line-num">74</span>    labels_df = pd.DataFrame(labels_data)</span>
+<span class="line"><span class="line-num">76</span>    labels_df.to_csv(labels_csv_path, index=<span class="kw">False</span>)</span>
+<span class="line"><span class="line-num">78</span>    features_df = pd.DataFrame(features_data)</span>
+<span class="line"><span class="line-num">80</span>    features_df.to_csv(features_csv_path, index=<span class="kw">False</span>)</span>
+</code></pre>
+</div>
+<span class="ann"><strong>ผลลัพธ์:</strong> ได้ไฟล์ <code>data/features.csv</code> ที่มีคอลัมน์ <code>image_filename, fan_score, r, g, b, l, a, b_lab</code> — พร้อมส่งต่อให้ Step 3 เทรนโมเดล</span>
+
+<div class="success-box">
+  <strong>ตัวอย่าง features.csv:</strong>
+  <table style="margin-top:8px">
+    <tr><th>image_filename</th><th>fan_score</th><th>r</th><th>g</th><th>b</th><th>l</th><th>a</th><th>b_lab</th></tr>
+    <tr><td>class8_001.jpg</td><td>8</td><td>216.45</td><td>134.21</td><td>28.67</td><td>63.18</td><td>28.45</td><td>65.92</td></tr>
+    <tr><td>class12_003.jpg</td><td>12</td><td>230.11</td><td>108.54</td><td>15.33</td><td>58.71</td><td>39.82</td><td>70.14</td></tr>
+  </table>
+</div>
+</section>
+
+
+<!-- ═══════════════════ STEP 3 ═══════════════════ -->
+<section id="step3">
+<h2><span class="step-badge">STEP 3</span> train_compare_models.py — แข่งขัน ML Models</h2>
+
+<div class="intro-box">
+  <p><strong>เป้าหมาย:</strong> นำ <code>features.csv</code> มาเทรนและเปรียบเทียบ <strong>5 โมเดล ML</strong> ด้วย <strong>Stratified 5-Fold Cross-Validation</strong> หาโมเดลที่ดีที่สุด</p>
+  <p><strong>วิธีรัน:</strong> <code>python train_compare_models.py</code></p>
+</div>
+
+<h3>🏆 โมเดลที่แข่งขัน</h3>
+<div class="code-section">
+<div class="code-header"><span class="filename">train_compare_models.py</span><span>บรรทัด 36–57</span></div>
+<pre><code><span class="line"><span class="line-num">36</span>    models = {</span>
+<span class="line"><span class="line-num">37</span>        <span class="st">'SVR (RBF Kernel)'</span>: Pipeline([</span>
+<span class="line"><span class="line-num">38</span>            (<span class="st">'scaler'</span>, StandardScaler()),        <span class="cm"># ปรับค่าให้มี mean=0, std=1</span></span>
+<span class="line"><span class="line-num">39</span>            (<span class="st">'regressor'</span>, SVR(kernel=<span class="st">'rbf'</span>, C=<span class="num">10.0</span>, epsilon=<span class="num">0.1</span>))</span>
+<span class="line"><span class="line-num">40</span>        ]),</span>
+<span class="line"><span class="line-num">41</span>        <span class="st">'Gradient Boosting'</span>: Pipeline([...]),</span>
+<span class="line"><span class="line-num">45</span>        <span class="st">'Random Forest'</span>: Pipeline([...]),</span>
+<span class="line"><span class="line-num">49</span>        <span class="st">'Linear Regression'</span>: Pipeline([...]),</span>
+<span class="line"><span class="line-num">53</span>        <span class="st">'Ridge Regression'</span>: Pipeline([...]),</span>
+<span class="line"><span class="line-num">57</span>    }</span>
+</code></pre>
+</div>
+
+<div class="key-concept">
+  <strong>Pipeline คืออะไร?</strong><br>
+  <code>Pipeline([('scaler', StandardScaler()), ('regressor', SVR(...))])</code> คือการ<strong>ต่อขั้นตอนเข้าด้วยกัน</strong> — เมื่อเรียก <code>pipeline.fit(X, y)</code> มันจะ:<br>
+  1️⃣ <code>scaler.fit_transform(X)</code> → ปรับค่า features ให้มี mean=0, std=1<br>
+  2️⃣ <code>regressor.fit(X_scaled, y)</code> → เทรนโมเดลบนข้อมูลที่ปรับแล้ว<br>
+  ข้อดี: ป้องกัน <strong>data leakage</strong> — scaler จะ fit เฉพาะข้อมูล train ไม่ leak ไป test
+</div>
+
+<h3>🔄 Stratified 5-Fold Cross-Validation</h3>
+<div class="code-section">
+<div class="code-header"><span class="filename">train_compare_models.py</span><span>บรรทัด 34, 70–89</span></div>
+<pre><code><span class="line"><span class="line-num">34</span>    skf = StratifiedKFold(n_splits=<span class="num">5</span>, shuffle=<span class="kw">True</span>, random_state=<span class="num">42</span>)</span>
+<span class="line"><span class="line-num">70</span>        <span class="kw">for</span> train_idx, val_idx <span class="kw">in</span> skf.split(X, y):  <span class="cm"># แบ่ง 5 ชุด</span></span>
+<span class="line"><span class="line-num">71</span>            X_tr, y_tr = X[train_idx], y[train_idx]    <span class="cm"># 80% สำหรับเทรน</span></span>
+<span class="line"><span class="line-num">72</span>            X_te, y_te = X[val_idx], y[val_idx]        <span class="cm"># 20% สำหรับทดสอบ</span></span>
+<span class="line"><span class="line-num">74</span>            pipeline.fit(X_tr, y_tr)          <span class="cm"># เทรนโมเดล</span></span>
+<span class="line"><span class="line-num">77</span>            p_tr = pipeline.predict(X_tr)     <span class="cm"># ทำนายบน train set (ดูว่า overfit ไหม)</span></span>
+<span class="line"><span class="line-num">83</span>            p_te = pipeline.predict(X_te)     <span class="cm"># ทำนายบน test set (วัดผลจริง)</span></span>
+<span class="line"><span class="line-num">84</span>            te_r2.append(r2_score(y_te, p_te))</span>
+<span class="line"><span class="line-num">85</span>            te_mae.append(mean_absolute_error(y_te, p_te))</span>
+</code></pre>
+</div>
+
+<div class="key-concept">
+  <strong>Stratified 5-Fold คืออะไร?</strong><br>
+  แบ่งข้อมูลเป็น 5 ส่วนเท่าๆ กัน โดย<strong>รักษาสัดส่วนของแต่ละ class ไว้</strong> (เช่น ถ้า class8 มี 10% ของข้อมูลทั้งหมด ทุก fold จะมี class8 ≈ 10%)<br>
+  วน 5 รอบ: แต่ละรอบใช้ 4 ส่วนเทรน + 1 ส่วนทดสอบ → สลับจนครบ → ได้ค่าเฉลี่ยที่น่าเชื่อถือ
+</div>
+
+<h3>📊 Metrics ที่วัด</h3>
+<table>
+  <tr><th>Metric</th><th>สูตร</th><th>ความหมาย</th></tr>
+  <tr><td><strong>R²</strong></td><td>1 − (SS_res / SS_tot)</td><td>โมเดลอธิบายความแปรปรวนได้กี่ % (1.0 = สมบูรณ์)</td></tr>
+  <tr><td><strong>MAE</strong></td><td>|y − ŷ| เฉลี่ย</td><td>ผิดพลาดเฉลี่ยกี่ระดับ (ยิ่งต่ำยิ่งดี)</td></tr>
+  <tr><td><strong>RMSE</strong></td><td>√(mean((y − ŷ)²))</td><td>เน้นลงโทษ error ขนาดใหญ่ (ยิ่งต่ำยิ่งดี)</td></tr>
+</table>
+
+<div class="success-box">
+  <strong>ผลลัพธ์: SVR (RBF Kernel) ชนะเลิศ</strong><br>
+  R² = 0.9185 · MAE = 0.6403 · Accuracy ±1 ระดับ = 92.7%
+</div>
+</section>
+
+
+<!-- ═══════════════════ STEP 4 ═══════════════════ -->
+<section id="step4">
+<h2><span class="step-badge">STEP 4</span> export_best_model.py — ส่งออกโมเดลเพื่อใช้จริง</h2>
+
+<div class="intro-box">
+  <p><strong>เป้าหมาย:</strong> เทรน SVR บน <strong>ข้อมูลทั้งหมด</strong> (ไม่แบ่ง fold) แล้วส่งออกเป็น 2 รูปแบบ:</p>
+  <ol>
+    <li><code>model.pkl</code> — สำหรับ Python Backend (ใช้ joblib โหลดตรงๆ)</li>
+    <li><code>model_weights.json</code> — สำหรับ Mobile App (คำนวณสมการด้วย Dart เอง)</li>
+  </ol>
+  <p><strong>วิธีรัน:</strong> <code>python export_best_model.py</code></p>
+</div>
+
+<h3>📦 เทรนและบันทึก model.pkl</h3>
+<div class="code-section">
+<div class="code-header"><span class="filename">export_best_model.py</span><span>บรรทัด 34–44</span></div>
+<pre><code><span class="line"><span class="line-num">34</span>    best_pipeline = Pipeline([</span>
+<span class="line"><span class="line-num">35</span>        (<span class="st">'scaler'</span>, StandardScaler()),</span>
+<span class="line"><span class="line-num">36</span>        (<span class="st">'regressor'</span>, SVR(kernel=<span class="st">'rbf'</span>, C=<span class="num">10.0</span>, epsilon=<span class="num">0.1</span>))</span>
+<span class="line"><span class="line-num">37</span>    ])</span>
+<span class="line"><span class="line-num">40</span>    best_pipeline.fit(X, y)  <span class="cm"># เทรนบนข้อมูลทั้งหมด (647 ภาพ)</span></span>
+<span class="line"><span class="line-num">44</span>    joblib.dump(best_pipeline, model_path)  <span class="cm"># บันทึกเป็น .pkl</span></span>
+</code></pre>
+</div>
+<span class="ann"><strong>ทำไมเทรนใหม่บน data ทั้งหมด?</strong> ใน Step 3 ใช้ CV เพื่อ<strong>ประเมินผล</strong> แต่ตอน deploy จริงเราต้องการโมเดลที่เก่งที่สุด → เทรนบน 100% ของ data</span>
+
+<h3>🧮 สกัดพารามิเตอร์คณิตศาสตร์สำหรับ On-Device</h3>
+<div class="code-section">
+<div class="code-header"><span class="filename">export_best_model.py</span><span>บรรทัด 59–73</span></div>
+<pre><code><span class="line"><span class="line-num">59</span>    scaler = best_pipeline.named_steps[<span class="st">'scaler'</span>]</span>
+<span class="line"><span class="line-num">60</span>    svr = best_pipeline.named_steps[<span class="st">'regressor'</span>]</span>
+<span class="line"><span class="line-num">62</span>    weights_dict = {</span>
+<span class="line"><span class="line-num">66</span>        <span class="st">'scaler_mean'</span>: scaler.mean_,       <span class="cm"># ค่าเฉลี่ยของแต่ละ feature (6 ค่า)</span></span>
+<span class="line"><span class="line-num">67</span>        <span class="st">'scaler_scale'</span>: scaler.scale_,     <span class="cm"># ค่า std ของแต่ละ feature (6 ค่า)</span></span>
+<span class="line"><span class="line-num">68</span>        <span class="st">'gamma'</span>: svr._gamma,               <span class="cm"># γ ค่าของ RBF Kernel</span></span>
+<span class="line"><span class="line-num">69</span>        <span class="st">'intercept'</span>: svr.intercept_[<span class="num">0</span>],    <span class="cm"># ค่า bias (b)</span></span>
+<span class="line"><span class="line-num">71</span>        <span class="st">'dual_coef'</span>: svr.dual_coef_[<span class="num">0</span>],   <span class="cm"># α (556 ค่า — 1 ต่อ support vector)</span></span>
+<span class="line"><span class="line-num">72</span>        <span class="st">'support_vectors'</span>: svr.support_vectors_  <span class="cm"># จุดอ้างอิง (556 × 6)</span></span>
+<span class="line"><span class="line-num">73</span>    }</span>
+</code></pre>
+</div>
+
+<div class="key-concept">
+  <strong>SVR RBF Kernel ทำนายอย่างไร?</strong><br>
+  สมการที่แอปมือถือคำนวณ:<br>
+  <code style="font-size:1.05em;color:var(--accent);">f(x) = Σᵢ αᵢ · exp(−γ · ||x − sᵢ||²) + b</code><br><br>
+  <table>
+    <tr><th>สัญลักษณ์</th><th>ค่าใน JSON</th><th>ความหมาย</th></tr>
+    <tr><td><code>x</code></td><td>(คำนวณจากภาพใหม่)</td><td>Features 6 ตัว [R,G,B,L*,a*,b*] ที่ปรับด้วย scaler แล้ว</td></tr>
+    <tr><td><code>sᵢ</code></td><td><code>support_vectors[i]</code></td><td>จุดอ้างอิง 556 จุด (เรียนรู้จากการเทรน)</td></tr>
+    <tr><td><code>αᵢ</code></td><td><code>dual_coef[i]</code></td><td>น้ำหนักของแต่ละ support vector</td></tr>
+    <tr><td><code>γ</code></td><td><code>gamma</code></td><td>ควบคุม "ความกว้าง" ของ kernel (ค่ายิ่งสูง ยิ่ง sensitive)</td></tr>
+    <tr><td><code>b</code></td><td><code>intercept</code></td><td>ค่า bias เลื่อนผลลัพธ์ขึ้น/ลง</td></tr>
+  </table>
+</div>
+
+<h3>✅ Sanity Check — ตรวจสอบความถูกต้อง</h3>
+<div class="code-section">
+<div class="code-header"><span class="filename">export_best_model.py</span><span>บรรทัด 89–106</span></div>
+<pre><code><span class="line"><span class="line-num">89</span>    sample_input = np.array([[<span class="num">226.0</span>, <span class="num">131.0</span>, <span class="num">23.0</span>, <span class="num">64.2</span>, <span class="num">29.8</span>, <span class="num">65.9</span>]])</span>
+<span class="line"><span class="line-num">90</span>    raw_pred_sk = best_pipeline.predict(sample_input)[<span class="num">0</span>]  <span class="cm"># ทำนายด้วย scikit-learn</span></span>
+<span class="line"><span class="line-num">93</span>    scaled_x = (sample_input[<span class="num">0</span>] - scaler_mean) / scaler_scale  <span class="cm"># ปรับค่าด้วยมือ</span></span>
+<span class="line"><span class="line-num">96</span>    dists = np.sum((sv_arr - scaled_x)**<span class="num">2</span>, axis=<span class="num">1</span>)  <span class="cm"># คำนวณระยะห่าง ||x - sᵢ||²</span></span>
+<span class="line"><span class="line-num">97</span>    k_vals = np.exp(-gamma * dists)       <span class="cm"># RBF Kernel: exp(-γ·d²)</span></span>
+<span class="line"><span class="line-num">98</span>    raw_pred_math = np.sum(coef * k_vals) + intercept  <span class="cm"># Σ αᵢ·K(x,sᵢ) + b</span></span>
+<span class="line"><span class="line-num">106</span>    <span class="bi">print</span>(<span class="st">f"Difference: {abs(raw_pred_sk - raw_pred_math):.1e}"</span>)  <span class="cm"># ≈ 0.0!</span></span>
+</code></pre>
+</div>
+<span class="ann"><strong>ตรวจสอบ Numerical Parity:</strong> คำนวณผลทำนายด้วย scikit-learn กับด้วยสูตรคณิตศาสตร์ล้วนๆ → ผลต้องเท่ากัน (diff ≈ 0) ถ้าไม่เท่ากันแปลว่า export ผิด</span>
+
+<div class="success-box">
+  <strong>ผลลัพธ์สุดท้าย:</strong><br>
+  📁 <code>model.pkl</code> → ใช้ใน Python Backend<br>
+  📁 <code>model_weights.json</code> (107 KB) → ฝังใน Flutter App → โทรศัพท์คำนวณสมการ SVR ได้เอง 100%
+</div>
+</section>
+
+
+<!-- ═══════════════════ SUMMARY ═══════════════════ -->
+<section id="summary">
+<h2>📝 สรุปทบทวนทั้งหมด</h2>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="flow-box done">📸 ภาพดิบ<br><small>~647 ภาพ</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box done">🔪 Auto-Crop<br><small>HSV Detection</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box done">🎨 Features CSV<br><small>R,G,B,L*,a*,b*</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box done">🏋️ 5-Fold CV<br><small>SVR ชนะ</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box active">📱 JSON 107KB<br><small>On-Device AI</small></div>
+  </div>
+</div>
+
+<h3>📁 ไฟล์ vs หน้าที่</h3>
+<table>
+  <tr><th>ไฟล์</th><th>หน้าที่หลัก</th><th>Input</th><th>Output</th></tr>
+  <tr><td><code>color_service.py</code></td><td>สกัดสี RGB/CIELAB จากภาพ</td><td>ภาพไข่แดง</td><td>[R,G,B,L*,a*,b*]</td></tr>
+  <tr><td><code>batch_auto_crop.py</code></td><td>ตรวจจับ + ครอปไข่แดง</td><td>raw_images/</td><td>auto_cropped_dataset/</td></tr>
+  <tr><td><code>build_features.py</code></td><td>สร้างตาราง features</td><td>ภาพที่ครอปแล้ว</td><td>features.csv</td></tr>
+  <tr><td><code>train_compare_models.py</code></td><td>แข่งขัน ML models</td><td>features.csv</td><td>ตารางเปรียบเทียบ</td></tr>
+  <tr><td><code>export_best_model.py</code></td><td>ส่งออกโมเดลสำเร็จรูป</td><td>features.csv</td><td>model.pkl + .json</td></tr>
+</table>
+
+<h3>🧪 เทคนิคสำคัญที่ใช้</h3>
+<table>
+  <tr><th>เทคนิค</th><th>อยู่ในไฟล์</th><th>ทำไมใช้</th></tr>
+  <tr><td>HSV Color Segmentation</td><td>batch_auto_crop.py</td><td>ตรวจจับสีไข่แดงโดยเฉพาะ แยกจากพื้นหลัง</td></tr>
+  <tr><td>Connected Component Labeling</td><td>batch_auto_crop.py</td><td>หา blob ที่ใหญ่สุด = ไข่แดง</td></tr>
+  <tr><td>Center Circular Mask 42%</td><td>color_service.py</td><td>ดึงเฉพาะเนื้อไข่แดงบริสุทธิ์ ตัดขอบ/พื้นหลังทิ้ง</td></tr>
+  <tr><td>RGB → CIELAB (D65)</td><td>color_service.py</td><td>ปริภูมิสีที่ตรงกับการรับรู้ของตามนุษย์</td></tr>
+  <tr><td>StandardScaler + Pipeline</td><td>train_compare_models.py</td><td>ปรับ features ให้มี mean=0 std=1 ป้องกัน data leakage</td></tr>
+  <tr><td>Stratified K-Fold CV</td><td>train_compare_models.py</td><td>ประเมินโมเดลอย่างเที่ยงตรง รักษาสัดส่วน class</td></tr>
+  <tr><td>SVR RBF Kernel Export</td><td>export_best_model.py</td><td>สกัดสมการคณิตศาสตร์ให้แอปมือถือคำนวณเองได้</td></tr>
+  <tr><td>Numerical Parity Check</td><td>export_best_model.py</td><td>ยืนยันว่า scikit-learn = สูตรคณิตศาสตร์</td></tr>
+</table>
+</section>
+
+</div>
+
+<footer style="text-align:center;padding:32px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border);">
+  🧠 ML Pipeline Tutorial — Egg Yolk Color Prediction · สร้างโดย Antigravity AI
+</footer>
+
+<script>
+// Highlight active nav link on scroll
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('.topnav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if(window.scrollY >= s.offsetTop - 100) current = s.id; });
+  navLinks.forEach(a => {
+    a.classList.remove('active');
+    if(a.getAttribute('href') === '#' + current) a.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

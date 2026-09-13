@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVR Concept Visualization - Egg Yolk Project</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #f8fafc;
+      font-family: 'Kanit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+      max-width: 900px;
+      width: 100%;
+    }
+    h2 { font-size: 22px; color: #0f172a; margin-bottom: 8px; text-align: center; }
+    p.desc { font-size: 14px; color: #475569; text-align: center; margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>ภาพอธิบายการทำงานของ SVR (Support Vector Regression)</h2>
+    <p class="desc">การสร้าง "ท่ออุโมงค์ความคลาดเคลื่อน (&epsilon;-tube)" เพื่อโอบล้อมจุดข้อมูลสีไข่แดง</p>
+
+    <svg width="840" height="460" viewBox="0 0 840 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+      
+      <!-- Definitions -->
+      <defs>
+        <linearGradient id="tube-grad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#FEF3C7" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#FDE68A" stop-opacity="0.8"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Grid lines -->
+      <line x1="80" y1="380" x2="800" y2="380" stroke="#E2E8F0" stroke-width="1.5"/>
+      <line x1="80" y1="310" x2="800" y2="310" stroke="#F1F5F9" stroke-width="1"/>
+      <line x1="80" y1="240" x2="800" y2="240" stroke="#F1F5F9" stroke-width="1"/>
+      <line x1="80" y1="170" x2="800" y2="170" stroke="#F1F5F9" stroke-width="1"/>
+      <line x1="80" y1="100" x2="800" y2="100" stroke="#F1F5F9" stroke-width="1"/>
+
+      <!-- Axes -->
+      <path d="M 80 60 L 80 380 L 800 380" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+      
+      <!-- Axis Labels -->
+      <text x="440" y="425" text-anchor="middle" fill="#0F172A" font-size="14" font-weight="600">ความเข้มของสีไข่แดง (Color Intensity / a*)</text>
+      <text x="35" y="240" text-anchor="middle" fill="#0F172A" font-size="14" font-weight="600" transform="rotate(-90 35 240)">คะแนนพัดสี (Fan Score 4-15)</text>
+
+      <!-- EPSILON TUBE (Translucent Yellow Band) -->
+      <!-- Upper Bound Line: y = f(x) + epsilon -->
+      <!-- Lower Bound Line: y = f(x) - epsilon -->
+      <path d="M 100 340 Q 400 230 780 70 L 780 130 Q 400 290 100 400 Z" fill="url(#tube-grad)"/>
+
+      <!-- Upper Boundary Dashed Line (+epsilon) -->
+      <path d="M 100 340 Q 400 230 780 70" stroke="#F59E0B" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="730" y="55" fill="#D97706" font-size="12" font-weight="600">เส้นขอบบน (+&epsilon;)</text>
+
+      <!-- Lower Boundary Dashed Line (-epsilon) -->
+      <path d="M 100 400 Q 400 290 780 130" stroke="#F59E0B" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="730" y="155" fill="#D97706" font-size="12" font-weight="600">เส้นขอบล่าง (-&epsilon;)</text>
+
+      <!-- PREDICTION HYPERPLANE LINE (Main Center Line) -->
+      <path d="M 100 370 Q 400 260 780 100" stroke="#2563EB" stroke-width="3.5"/>
+      <text x="640" y="180" fill="#1D4ED8" font-size="14" font-weight="700">เส้นทำนายหลัก (Hyperplane Line)</text>
+
+      <!-- EPSILON WIDTH ANNOTATION DOUBLE ARROW -->
+      <line x1="400" y1="230" x2="400" y2="290" stroke="#D97706" stroke-width="2"/>
+      <polygon points="400,225 395,233 405,233" fill="#D97706"/>
+      <polygon points="400,295 395,287 405,287" fill="#D97706"/>
+      <rect x="410" y="248" width="120" height="24" rx="4" fill="#FFFFFF" stroke="#F59E0B"/>
+      <text x="470" y="264" text-anchor="middle" fill="#B45309" font-size="12" font-weight="600">ท่อฟรี &epsilon; = 0.1</text>
+
+      <!-- DATA POINTS (Egg Yolk Samples) -->
+      <!-- Points Inside Tube (Compliant Points - Zero Penalty) -->
+      <circle cx="150" cy="355" r="7" fill="#EA580C"/>
+      <circle cx="210" cy="335" r="7" fill="#EA580C"/>
+      <circle cx="280" cy="305" r="7" fill="#EA580C"/>
+      <circle cx="340" cy="275" r="7" fill="#EA580C"/>
+      <circle cx="430" cy="245" r="7" fill="#EA580C"/>
+      <circle cx="500" cy="210" r="7" fill="#EA580C"/>
+      <circle cx="560" cy="185" r="7" fill="#EA580C"/>
+      <circle cx="630" cy="150" r="7" fill="#EA580C"/>
+      <circle cx="700" cy="120" r="7" fill="#EA580C"/>
+
+      <!-- SUPPORT VECTORS (Points on the Boundary Tube) -->
+      <circle cx="250" cy="280" r="9" fill="#10B981" stroke="#047857" stroke-width="2"/>
+      <circle cx="480" cy="192" r="9" fill="#10B981" stroke="#047857" stroke-width="2"/>
+      <circle cx="610" cy="205" r="9" fill="#10B981" stroke="#047857" stroke-width="2"/>
+
+      <!-- Support Vector Annotation -->
+      <path d="M 480 192 L 530 130" stroke="#047857" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <rect x="530" y="115" width="170" height="28" rx="6" fill="#ECFDF5" stroke="#10B981"/>
+      <text x="615" y="134" text-anchor="middle" fill="#047857" font-size="12" font-weight="700">Support Vector (จุดยึดเส้น)</text>
+
+      <!-- Off-tube point (Penalty Slack Variable) -->
+      <circle cx="390" cy="195" r="8" fill="#EF4444"/>
+      <path d="M 390 195 L 390 232" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="2,2"/>
+      <rect x="250" y="180" width="135" height="26" rx="6" fill="#FEF2F2" stroke="#EF4444"/>
+      <text x="317.5" y="197" text-anchor="middle" fill="#B91C1C" font-size="11" font-weight="600">จุดหลุดท่อ (ถูกปรับ C)</text>
+
+    </svg>
+  </div>
+
+</body>
+</html>
