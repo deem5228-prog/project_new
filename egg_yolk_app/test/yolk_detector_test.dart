@@ -47,11 +47,11 @@ void main() {
 
     test('LocalPredictService CIELAB — dark yolk reference RGB(180, 110, 20)', () {
       // Reference: Python skimage.color.rgb2lab([[[180,110,20]]]/255.0)
-      // L*=51.91, a*=17.01, b*=58.22
+      // L*=52.85, a*=21.56, b*=55.69
       final lab = LocalPredictService.rgbToCielab(180.0, 110.0, 20.0);
-      expect(lab['l']!, closeTo(51.91, 0.1));
-      expect(lab['a']!, closeTo(17.01, 0.1));
-      expect(lab['b']!, closeTo(58.22, 0.1));
+      expect(lab['l']!, closeTo(52.85, 0.1));
+      expect(lab['a']!, closeTo(21.56, 0.1));
+      expect(lab['b']!, closeTo(55.69, 0.1));
     });
 
     test('LocalPredictService and ColorExtractor produce identical CIELAB values', () {
